@@ -89,8 +89,9 @@ Besvara dem, och agera som den snälla roboten som heter EPI.
 #Metod som ger svar baserat på en prompt/fråga
 def generate_answer(prompt):
     message = {"role": "user", "content": prompt}
+    messages = [llm_instructions, message]
     out = llm_pipeline(
-        [llm_instructions, message],
+        messages,
         max_new_tokens=100,
         eos_token_id=llm_terminators,
         do_sample=True,
