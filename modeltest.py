@@ -2,7 +2,7 @@
 
 # LLM:
 import torch
-from transformers import pipeline, AutoTokenizer, AutoModelForCausalLM
+import transformers
 
 
 #STT:
@@ -74,8 +74,8 @@ llm_name = "AI-Sweden-Models/gpt-sw3-6.7b-v2"
 llm_device = "cuda:0" if torch.cuda.is_available() else "cpu"
 
 # Initialize Tokenizer & Model
-llm_tokenizer = AutoTokenizer.from_pretrained(llm_name, use_fast=False)
-llm_model = AutoModelForCausalLM.from_pretrained(llm_name, low_cpu_mem_usage=False)
+llm_tokenizer = transformers.AutoTokenizer.from_pretrained(llm_name, use_fast=False)
+llm_model = transformers.AutoModelForCausalLM.from_pretrained(llm_name, low_cpu_mem_usage=False)
 llm_model.eval()
 llm_model.to(llm_device)
 
