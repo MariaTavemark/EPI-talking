@@ -16,7 +16,7 @@ import sounddevice
 import pyttsx3
 
 #Initialize TTS variables
-tts_engine = pyttsx3.init()
+tts_engine = pyttsx3.init(driverName="espeak")
 
 tts_rate = tts_engine.getProperty('rate') 
 print("Default speaking rate is:", tts_rate)
@@ -32,7 +32,7 @@ tts_volume_desired = 1.0
 tts_engine.setProperty('volume',tts_volume_desired)
 print("Our tts volume is:", tts_volume_desired)
 
-tts_voices = tts_engine.getProperty('voices') 
+tts_voices = list(filter(lambda x: 'sv' in x.languages, tts_engine.getProperty('voices')))
 print("Available tts voices: 0 to ", len(tts_voices) - 1)
 # Change below value to something that was printed by the row above...
 tts_voice = 0 # Ok voices seem to be 88(male), 69(female), 2, 3, 13
@@ -71,8 +71,8 @@ llm_model = "AI-Sweden-Models/Llama-3-8B-instruct"
 llm_pipeline = transformers.pipeline(
     "text-generation",
     model=llm_model,
-    model_kwargs={"torch_dtype": torch.bfloat16},
-    device_map="auto",
+    model_kwargs={"torch_dtype": torch.float16},
+    device_map=0,
 )
 
 llm_terminators = [
@@ -89,14 +89,13 @@ Besvara dem, och agera som den snälla roboten som heter EPI.
 #Metod som ger svar baserat på en prompt/fråga
 def generate_answer(prompt):
     message = {"role": "user", "content": prompt}
-    messages = [llm_instructions, message]
     out = llm_pipeline(
-        messages,
-        max_new_tokens=100,
+        [llm_instructions, message],
+        max_new_tokens=256,
         eos_token_id=llm_terminators,
         do_sample=True,
         temperature=0.6,
-        top_p=0.9,
+        top_p=0.9
     )
 
     generated_text = out[0]["generated_text"][-1]  
@@ -123,9 +122,9 @@ def stt_recognize():
 
 
 # EXEMPEL för LLM:
-prompt = "Hej, jag heter Maria. Vad heter du?"
-print("Generating answer for prompt: ", prompt)
-print(generate_answer(prompt))  
+#prompt = "Hej, jag heter Maria. Vad heter du?"
+#print("Generating answer for prompt: ", prompt)
+#print(generate_answer(prompt))  
 
 #print("Listening...")
 
@@ -141,20 +140,24 @@ print(generate_answer(prompt))
 
 def run_stt_to_llm():
     stream.start()
+    print("System ready")
     while True:
         result = stt_recognize()
         #Test if we recognized any speech
         if result:
             print("Recognized text was:", result)
             #Pass to LLM
-            #answer = generate_answer(result)
-            #print("Answer was:", answer)
+            print("EPI is thinking....")
+            answer = generate_answer(result)
+            print("Answer was:", answer)
             #Pass to TTS
             stream.stop()
-            #tts_engine.say(answer)
-            tts_engine.say(result)
+            print("EPI is talking")
+            tts_engine.say(answer["content"])
+            #tts_engine.say(result)
             tts_engine.runAndWait()
             stream.start()
+            print("EPI is listening")
 
             #Add epi-moves and stuff in this method
         else:
