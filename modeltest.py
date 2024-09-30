@@ -67,43 +67,38 @@ stream = sounddevice.RawInputStream(samplerate=stt_sample_rate, blocksize = stt_
 
 
 # Initialize LLM Variables
-llm_name = "AI-Sweden-Models/gpt-sw3-6.7b-v2"
-#llm_name = "AI-Sweden-Models/gpt-sw3-1.3b"
-#llm_name = "AI-Sweden-Models/gpt-sw3-356m" # Fungerar, är bara lite dum
-#llm_name = "AI-Sweden-Models/gpt-sw3-6.7b-v2-instruct-4bit-gptq"
-llm_device = "cuda:0" if torch.cuda.is_available() else "cpu"
+llm_model = "AI-Sweden-Models/Llama-3-8B-instruct"
+llm_pipeline = transformers.pipeline(
+    "text-generation",
+    model=llm_model,
+    model_kwargs={"torch_dtype": torch.bfloat16},
+    device_map="auto",
+)
 
-# Initialize Tokenizer & Model
-llm_tokenizer = transformers.AutoTokenizer.from_pretrained(llm_name, use_fast=False)
-llm_model = transformers.AutoModelForCausalLM.from_pretrained(llm_name, low_cpu_mem_usage=False)
-llm_model.eval()
-llm_model.to(llm_device)
+llm_terminators = [
+    llm_pipeline.tokenizer.eos_token_id,
+    llm_pipeline.tokenizer.convert_tokens_to_ids("<|eot_id|>")
+]
 
-
-llm_base_prompt = """
+llm_instructions = {"role": "system", "content": """
 Du är EPI, en gullig robot som ska prata med sina vänner och känna igen dem. Du kan visa känslor, men ska 
 generellt sett vara glad och snäll. Du får aldrig diskriminera någon. Din kompis, en användare, har sagt något till dig. 
 Besvara dem, och agera som den snälla roboten som heter EPI.
-
-Användaren sade: 
-"""
+"""}
 
 #Metod som ger svar baserat på en prompt/fråga
 def generate_answer(prompt):
-    #["input_ids"]
-    input_ids = llm_tokenizer(llm_base_prompt + prompt, return_tensors="pt")["input_ids"].to(llm_device)
-    #print("Generated input_ids")
-    generated_token_ids = llm_model.generate(
-        inputs=input_ids,
+    message = {"role": "user", "content": prompt}
+    out = llm_pipeline(
+        [llm_instructions, message],
         max_new_tokens=100,
-        #max_length=30,
-        do_sample=False,
-        #temperature=0.6,
-        top_p=1,
-    )[0]
-    #print("Generated token_ids")
+        eos_token_id=llm_terminators,
+        do_sample=True,
+        temperature=0.6,
+        top_p=0.9,
+    )
 
-    generated_text = llm_tokenizer.decode(generated_token_ids, skip_special_tokens=True)  
+    generated_text = out[0]["generated_text"][-1]  
     
     return generated_text
 
