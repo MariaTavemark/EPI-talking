@@ -1,6 +1,7 @@
 #/Users/epi/miniforge3/bin/python3
 
 #LLM key file choosing
+from random import random
 import time
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
@@ -19,6 +20,7 @@ import sounddevice
 
 #TTS:
 import pyttsx3
+import threading
 
 #EPI:
 import requests
@@ -49,10 +51,10 @@ tts_volume_desired = 1.0
 #Mess with the below to change rate of speech
 tts_rate_desired = 125
 
-tts_voice = 0 # Ok voices seem to be 88(male), 69(female), 2, 3, 13
+tts_voice = 69 # Ok voices seem to be 88(male), 69(female), 2, 3, 13
 #Funny values on the above (robotic/strange): 40, 61, 87, 113, 118, 139, 140, 144
 
-tts_engine = pyttsx3.init(driverName="espeak")
+tts_engine = pyttsx3.init()
 
 tts_rate = tts_engine.getProperty('rate') 
 print("Default speaking rate is:", tts_rate)
@@ -65,6 +67,8 @@ tts_engine.setProperty('volume',tts_volume_desired)
 print("Our tts volume is:", tts_volume_desired)
 
 tts_voices = list(filter(lambda x: 'sv' in x.languages, tts_engine.getProperty('voices')))
+if len(tts_voices) == 0:
+    tts_voices = tts_engine.getProperty('voices')
 print("Available tts voices: 0 to ", len(tts_voices) - 1)
 tts_engine.setProperty('voice', tts_voices[tts_voice].id) 
 print("Our tts voice choice is:", tts_voice)
@@ -212,14 +216,14 @@ def generate_answer(prompt):
 
 
 def stt_recognize():
+    if stt_queue.empty():
+        return None
     data = stt_queue.get()
-    #print("Am I here?")
     # If stt recognizes data as speech
     if stt.AcceptWaveform(data):
         res = stt.Result()
         result = json.loads(res)
         recognized_text = result['text']
-        #print(res)
         return recognized_text
     else:
         #print("STT was not sure, but thought it heard: ", stt.PartialResult())
@@ -229,10 +233,10 @@ def stt_recognize():
 
 def control_epi(channel, value):
     if channel not in epi_channels:
-        raise ValueError("Invalid EPI channel sent")
+        raise ValueError("Invalid EPI channel sent:", channel)
     valid_values = epi_valid_ranges[channel]
     if valid_values[0] <= value <= valid_values[1]:
-         requests.get(epi_url + epi_control_path + epi_channels[channel] + "/0/" + value)
+         requests.get(epi_url + epi_control_path + str(epi_channels[channel]) + "/0/" + str(value), timeout=0.1)
 
 
 
@@ -241,13 +245,13 @@ def control_epi(channel, value):
 
 def epi_neutral():
     control_epi("mouth_intensity", 0.5)
-    control_epi("mouth_r", 100)
-    control_epi("mouth_g", 97)
+    control_epi("mouth_r", 50)
+    control_epi("mouth_g", 50)
     control_epi("mouth_b", 0)
-    control_epi("eye_r", 100)
-    control_epi("eye_g", 97)
-    control_epi("eye_b", 0)
-    control_epi("eye_intensity", 0.2)
+    control_epi("eyes_r", 50)
+    control_epi("eyes_g", 50)
+    control_epi("eyes_b", 0)
+    control_epi("eyes_intensity", 0.2)
     control_epi("left_pupil", 20)
     control_epi("right_pupil", 20)
 
@@ -256,10 +260,10 @@ def epi_sad():
     control_epi("mouth_r", 0)
     control_epi("mouth_g", 0)
     control_epi("mouth_b", 100)
-    control_epi("eye_r", 0)
-    control_epi("eye_g", 0)
-    control_epi("eye_b", 100)
-    control_epi("eye_intensity", 0.2)
+    control_epi("eyes_r", 0)
+    control_epi("eyes_g", 0)
+    control_epi("eyes_b", 100)
+    control_epi("eyes_intensity", 0.2)
     control_epi("left_pupil", 100)
     control_epi("right_pupil", 100)
 
@@ -268,10 +272,10 @@ def epi_happy():
     control_epi("mouth_r", 0)
     control_epi("mouth_g", 100)
     control_epi("mouth_b", 0)
-    control_epi("eye_r", 0)
-    control_epi("eye_g", 100)
-    control_epi("eye_b", 0)
-    control_epi("eye_intensity", 0.5)
+    control_epi("eyes_r", 0)
+    control_epi("eyes_g", 100)
+    control_epi("eyes_b", 0)
+    control_epi("eyes_intensity", 0.5)
     control_epi("left_pupil", 50)
     control_epi("right_pupil", 50)
 
@@ -280,10 +284,10 @@ def epi_angry():
     control_epi("mouth_r", 100)
     control_epi("mouth_g", 0)
     control_epi("mouth_b", 0)
-    control_epi("eye_r", 100)
-    control_epi("eye_g", 0)
-    control_epi("eye_b", 0)
-    control_epi("eye_intensity", 1.0)
+    control_epi("eyes_r", 100)
+    control_epi("eyes_g", 0)
+    control_epi("eyes_b", 0)
+    control_epi("eyes_intensity", 1.0)
     control_epi("left_pupil", 0)
     control_epi("right_pupil", 0)
 
@@ -299,7 +303,7 @@ def epi_shake_head():
 
     control_epi("neck_pan", 0)
 
-def epi_shake_head():
+def epi_nod():
     num_shakes = 2
     min_degrees = 0
     max_degrees = 30
@@ -314,8 +318,8 @@ def epi_shake_head():
 
 
 def epi_thinking():
-    control_epi("left_pupil", 100)
-    control_epi("right_pupil", 100)
+    control_epi("left_pupil", 50)
+    control_epi("right_pupil", 50)
 
 
 def epi_done_thinking():
@@ -325,25 +329,48 @@ def epi_done_thinking():
 
 # No touch, for mouth intensity control
 def talking_word(name, location, length):
-    control_epi("mouth_intensity", range(8)/10)
+    print("Random light")
+    control_epi("mouth_intensity", random())
 
 
 def finished_talking(name, completed):
-    if completed:
-        epi_neutral()
-        stream.start()
-        print("EPI is listening")
+    print("completed:", completed)
+    #tts_engine.end_loop()
+    #if completed:
+    #    epi_neutral()
+    #    stream.start()
+    #    print("EPI is listening")
 
 
-def init_tts_functions():
-    tts_engine.connect("started-word", talking_word)
-    tts_engine.connect("finished-utterance")
+def newTTSthread():
+    return threading.Thread(target=tts_engine.runAndWait())
 
 
 def run_stt_to_llm():
-    stream.start()
     print("System ready")
+    print("EPI is angry")
+    epi_angry()
+    time.sleep(1)
+    print("EPI is sad")
+    epi_sad()
+    time.sleep(1)
+    print("EPI is happy")
+    epi_happy()
+    time.sleep(1)
+    print("EPI is neutral")
     epi_neutral()
+
+    tts_thread:threading.Thread = newTTSthread()
+
+    stream.start()
+    tts_engine.say("Hej!")
+    tts_thread.start()
+    while tts_thread.is_alive():
+        time.sleep(0.1)
+
+    print("EPI is listening")
+
+
     while True:
         result = stt_recognize()
         #Test if we recognized any speech
@@ -353,7 +380,7 @@ def run_stt_to_llm():
             #Pass to LLM
             epi_thinking()
             print("EPI is thinking....")
-            answer = generate_answer(result)
+            answer = generate_answer(result).split()
             if debug: print("Answer was:", answer)
             epi_done_thinking()
 
@@ -362,10 +389,38 @@ def run_stt_to_llm():
 
 
             print("EPI is talking")
-            print("EPI said: ", answer)
-            epi_talking = True
-            tts_engine.say(answer)
-            tts_engine.startLoop()
+            print("EPI said: ", " ".join(answer[:-1]))
+            mood:str = answer[-1:][0]
+
+            if "glad" in mood.lower():
+                print("EPI is happy")
+                epi_happy()
+            elif "arg" in mood.lower():
+                print("EPI is angry")
+                epi_angry()
+            elif "ledsen" in mood.lower():
+                print("EPI is sad")
+                epi_sad()
+            else:
+                print("Epi had the mood", mood.lower())
+                epi_neutral()
+
+            if "nej" in answer[:-1] or "Nej" in answer[:-1]:
+                epi_shake_head()
+            elif "ja" in answer[:-1] or "Ja" in answer[:-1]:
+                epi_nod()
+
+            tts_engine.say(" ".join(answer[:-1]))
+            tts_thread = newTTSthread()
+            tts_thread.start()
+
+            while tts_thread.is_alive():
+                control_epi("mouth_intensity", random())
+                time.sleep(0.2)
+            epi_neutral()
+            stream.start()
+            print("EPI is listening")
+            
             
 
             #Add epi-moves and stuff in this method
@@ -393,7 +448,6 @@ if __name__ == "__main__":
     except Exception as err:
         print("An error occured during the conversation with EPI:", err)
         print(err.__cause__)
-        print(err.__traceback__)
     finally:
         print("This session had", llm_input_token_count, "input tokens and", llm_output_token_count, "output tokens")
         input_cost = llm_input_token_count * llm_input_token_cost[llm_model]
@@ -402,5 +456,6 @@ if __name__ == "__main__":
         print("Total cost was:", input_cost + output_cost, "kr")
         exit(0)
 
-
-#run with "python3 modeltest.py"
+#first run DYLD_LIBRARY_PATH=/usr/local/lib /Users/epi/Code/ikaros/Bin/ikaros /Users/epi/epi-talking/Epi/ExperimentSetup.ikg -t -r25 EpiName=EpiWhite
+# then wait until EPI says "Hello"
+#then run with "python3 modeltest.py"
