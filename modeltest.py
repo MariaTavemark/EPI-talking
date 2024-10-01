@@ -5,6 +5,7 @@ from random import random
 import time
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
+import os.path
 
 # LLM:
 from openai import OpenAI
@@ -29,10 +30,14 @@ debug = False
 
 
 #LLM key file config
+default_keyfile = "/Volumes/MARIAT/openai.txt"
 try:
-    print("Please select the key-file")
-    Tk().withdraw()
-    keyfile_path = askopenfilename()
+    if not os.path.isfile(default_keyfile):
+        print("Please select the key-file")
+        Tk().withdraw()
+        keyfile_path = askopenfilename()
+    else:
+        keyfile_path = default_keyfile
     keyfile = open(keyfile_path, 'r')
     llm_org, llm_proj, llm_api_key = [k.removesuffix("\n") for k in keyfile.readlines()]
 except Exception as err:
@@ -325,21 +330,6 @@ def epi_thinking():
 def epi_done_thinking():
     control_epi("left_pupil", 20)
     control_epi("right_pupil", 20)
-
-
-# No touch, for mouth intensity control
-def talking_word(name, location, length):
-    print("Random light")
-    control_epi("mouth_intensity", random())
-
-
-def finished_talking(name, completed):
-    print("completed:", completed)
-    #tts_engine.end_loop()
-    #if completed:
-    #    epi_neutral()
-    #    stream.start()
-    #    print("EPI is listening")
 
 
 def newTTSthread():
