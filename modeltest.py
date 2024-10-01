@@ -299,7 +299,7 @@ def epi_angry():
 def epi_shake_head():
     num_shakes = 2
     degrees = 20
-    delay = 0.05
+    delay = 0.02
 
     for i in range(num_shakes):
         for j in range(-degrees, degrees):
@@ -311,8 +311,8 @@ def epi_shake_head():
 def epi_nod():
     num_shakes = 2
     min_degrees = 0
-    max_degrees = 30
-    delay = 0.05
+    max_degrees = 15
+    delay = 0.02
 
     for i in range(num_shakes):
         for j in range(min_degrees, max_degrees):
@@ -349,6 +349,12 @@ def run_stt_to_llm():
     time.sleep(1)
     print("EPI is neutral")
     epi_neutral()
+    time.sleep(1)
+    print("EPI is saying no")
+    epi_shake_head()
+    time.sleep(1)
+    print("EPI is saying yes")
+    epi_nod()
 
     tts_thread:threading.Thread = newTTSthread()
 
@@ -368,11 +374,11 @@ def run_stt_to_llm():
             if debug: print("Recognized text was:", result)
             print("You said:", result)
             #Pass to LLM
-            epi_thinking()
+            #epi_thinking()
             print("EPI is thinking....")
             answer = generate_answer(result).split()
             if debug: print("Answer was:", answer)
-            epi_done_thinking()
+            #epi_done_thinking()
 
             #Pass to TTS
             stream.stop()
@@ -404,9 +410,13 @@ def run_stt_to_llm():
             tts_thread = newTTSthread()
             tts_thread.start()
 
+            #print("EPI is talking and flashing")
             while tts_thread.is_alive():
-                control_epi("mouth_intensity", random())
-                time.sleep(0.2)
+                intensity = random()
+                #print("Random mouth intensity: ", intensity)
+                control_epi("mouth_intensity", intensity)
+                time.sleep(0.5)
+
             epi_neutral()
             stream.start()
             print("EPI is listening")
@@ -449,3 +459,18 @@ if __name__ == "__main__":
 #first run DYLD_LIBRARY_PATH=/usr/local/lib /Users/epi/Code/ikaros/Bin/ikaros /Users/epi/epi-talking/Epi/ExperimentSetup.ikg -t -r25 EpiName=EpiWhite
 # then wait until EPI says "Hello"
 #then run with "python3 modeltest.py"
+
+
+#Om ikaros kraschar så öka -r25 till -r250
+#
+
+#Problem: 
+
+# Att skicka för långa ljudsekvenser med TTS till högtalaren resulterar i segfaults för att den inte kan kommunicera med huvudet
+# Lösning: Använd macbookens högtalare...
+
+# Dålig STT, kan inte många ord..
+# Lösning: Byt till openAIs modell whisper som kan alla ord på alla språk.. (kostar $0.006 /minut )
+
+# Dålig TTS
+# Lösning: Byt till Whisper (kostar 15 USD/1M tecken)
