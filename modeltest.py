@@ -1,15 +1,17 @@
 #/Users/epi/miniforge3/bin/python3
 
 #LLM key file choosing
+import time
 from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 
 # LLM:
 from openai import OpenAI
 import json
+import openai
+
 
 #STT:
-import openai
 import vosk
 import queue
 import json
@@ -17,6 +19,9 @@ import sounddevice
 
 #TTS:
 import pyttsx3
+
+#EPI:
+import requests
 
 debug = False
 
@@ -89,6 +94,48 @@ stream = sounddevice.RawInputStream(samplerate=stt_sample_rate, blocksize = stt_
 
 
 
+# Initialize EPI-head variables
+epi_url = "http://127.0.0.1:8000"
+epi_control_path = "/control/SR.positions/"
+
+epi_channels = {
+    "neck_tilt": 0,
+    "neck_pan": 1,
+    "left_eye": 2,
+    "right_eye": 3,
+    "left_pupil": 4,
+    "right_pupil": 5,
+    "eyes_r": 19,
+    "eyes_g": 20,
+    "eyes_b": 21,
+    "eyes_intensity": 22,
+    "mouth_r": 23,
+    "mouth_g": 24,
+    "mouth_b": 25,
+    "mouth_intensity": 26,
+    "sound_clip": 27
+}
+
+epi_valid_ranges = {
+    "neck_tilt": (-55, 55),
+    "neck_pan": (-30, 30),
+    "left_eye": (-20, 20),
+    "right_eye": (-20, 20),
+    "left_pupil": (0, 100),
+    "right_pupil": (0, 100),
+    "eyes_r": (0, 100),
+    "eyes_g": (0, 100),
+    "eyes_b": (0, 100),
+    "eyes_intensity": (0.0, 1.0),
+    "mouth_r": (0, 100),
+    "mouth_g": (0, 100),
+    "mouth_b": (0, 100),
+    "mouth_intensity": (0.0, 1.0),
+    "sound_clip": 27
+}
+
+
+
 # Initialize LLM Variables
 llm_model="gpt-4o-mini"
 
@@ -133,6 +180,7 @@ llm_instructions = {"role": "system", "content": """
 Du är EPI, en gullig robot som ska prata med sina vänner och känna igen dem. Du kan visa känslor, men ska 
 generellt sett vara glad och snäll. Du får aldrig diskriminera någon. Användaren kan inte säga ditt namn på grund av dålig taligenkänning, så
 om användaren verkar kalla dig något annat namn ska du ignorera det och fortsätta som vanligt. Använd inte några specialtecken i dina svar, utan bara a till ö och skiljetecken.
+Avsluta ditt svar med att skriva en av följande fraser, baserat på hur EPI känner sig: arg, glad, ledsen, neutral
 """}
 
 llm_message_history = [llm_instructions]
@@ -177,30 +225,125 @@ def stt_recognize():
         #print("STT was not sure, but thought it heard: ", stt.PartialResult())
         # No speech detected in audio. If persistant problem, try messing with stt_chunk_size
         return None
+    
+
+def control_epi(channel, value):
+    if channel not in epi_channels:
+        raise ValueError("Invalid EPI channel sent")
+    valid_values = epi_valid_ranges[channel]
+    if valid_values[0] <= value <= valid_values[1]:
+         requests.get(epi_url + epi_control_path + epi_channels[channel] + "/0/" + value)
 
 
 
+#Creat epi moods below
 
-# EXEMPEL för LLM:
-#prompt = "Hej, jag heter Maria. Vad heter du?"
-#print("Generating answer for prompt: ", prompt)
-#print(generate_answer(prompt))  
 
-#print("Listening...")
+def epi_neutral():
+    control_epi("mouth_intensity", 0.5)
+    control_epi("mouth_r", 100)
+    control_epi("mouth_g", 97)
+    control_epi("mouth_b", 0)
+    control_epi("eye_r", 100)
+    control_epi("eye_g", 97)
+    control_epi("eye_b", 0)
+    control_epi("eye_intensity", 0.2)
+    control_epi("left_pupil", 20)
+    control_epi("right_pupil", 20)
 
-# EXEMPEL för STT:
-#recognized_audio = stt_recognize()
+def epi_sad():
+    control_epi("mouth_intensity", 0.2)
+    control_epi("mouth_r", 0)
+    control_epi("mouth_g", 0)
+    control_epi("mouth_b", 100)
+    control_epi("eye_r", 0)
+    control_epi("eye_g", 0)
+    control_epi("eye_b", 100)
+    control_epi("eye_intensity", 0.2)
+    control_epi("left_pupil", 100)
+    control_epi("right_pupil", 100)
 
-# EXEMPEL för TTS:
-#tts_engine.say("Hej, detta är ett test!")
-#tts_engine.say('Jag pratar i hastigheten ' + str(tts_rate_desired))
-#tts_engine.runAndWait()
+def epi_happy():
+    control_epi("mouth_intensity", 0.5)
+    control_epi("mouth_r", 0)
+    control_epi("mouth_g", 100)
+    control_epi("mouth_b", 0)
+    control_epi("eye_r", 0)
+    control_epi("eye_g", 100)
+    control_epi("eye_b", 0)
+    control_epi("eye_intensity", 0.5)
+    control_epi("left_pupil", 50)
+    control_epi("right_pupil", 50)
 
-#OBS OBS OBS kommentera bort exempel ovan innan nedan ska köras
+def epi_angry():
+    control_epi("mouth_intensity", 1.0)
+    control_epi("mouth_r", 100)
+    control_epi("mouth_g", 0)
+    control_epi("mouth_b", 0)
+    control_epi("eye_r", 100)
+    control_epi("eye_g", 0)
+    control_epi("eye_b", 0)
+    control_epi("eye_intensity", 1.0)
+    control_epi("left_pupil", 0)
+    control_epi("right_pupil", 0)
+
+def epi_shake_head():
+    num_shakes = 2
+    degrees = 20
+    delay = 0.05
+
+    for i in range(num_shakes):
+        for j in range(-degrees, degrees):
+            control_epi("neck_pan", j)
+            time.sleep(delay)
+
+    control_epi("neck_pan", 0)
+
+def epi_shake_head():
+    num_shakes = 2
+    min_degrees = 0
+    max_degrees = 30
+    delay = 0.05
+
+    for i in range(num_shakes):
+        for j in range(min_degrees, max_degrees):
+            control_epi("neck_tilt", j)
+            time.sleep(delay)
+
+    control_epi("neck_tilt", 0)
+
+
+def epi_thinking():
+    control_epi("left_pupil", 100)
+    control_epi("right_pupil", 100)
+
+
+def epi_done_thinking():
+    control_epi("left_pupil", 20)
+    control_epi("right_pupil", 20)
+
+
+# No touch, for mouth intensity control
+def talking_word(name, location, length):
+    control_epi("mouth_intensity", range(8)/10)
+
+
+def finished_talking(name, completed):
+    if completed:
+        epi_neutral()
+        stream.start()
+        print("EPI is listening")
+
+
+def init_tts_functions():
+    tts_engine.connect("started-word", talking_word)
+    tts_engine.connect("finished-utterance")
+
 
 def run_stt_to_llm():
     stream.start()
     print("System ready")
+    epi_neutral()
     while True:
         result = stt_recognize()
         #Test if we recognized any speech
@@ -208,17 +351,22 @@ def run_stt_to_llm():
             if debug: print("Recognized text was:", result)
             print("You said:", result)
             #Pass to LLM
+            epi_thinking()
             print("EPI is thinking....")
             answer = generate_answer(result)
             if debug: print("Answer was:", answer)
+            epi_done_thinking()
+
             #Pass to TTS
             stream.stop()
+
+
             print("EPI is talking")
             print("EPI said: ", answer)
+            epi_talking = True
             tts_engine.say(answer)
-            tts_engine.runAndWait()
-            stream.start()
-            print("EPI is listening")
+            tts_engine.startLoop()
+            
 
             #Add epi-moves and stuff in this method
         else:
@@ -256,8 +404,3 @@ if __name__ == "__main__":
 
 
 #run with "python3 modeltest.py"
-
-
-#Summering: 
-# Allt fungerar jättebra, såvida vi får en maskin med en RTX 4+70/4080 att köra på. Att köra en LLM lokalt kräver en del resurser....
-# STT kommer inte kunna identifiera "EPI" som ord, såvida vi inte tränar den. Vilket kräver en bättre maskin än vår laptop.
