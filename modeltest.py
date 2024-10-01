@@ -15,6 +15,9 @@ import sounddevice
 #TTS:
 import pyttsx3
 
+debug = False
+
+
 #Initialize TTS variables
 tts_engine = pyttsx3.init(driverName="espeak")
 
@@ -93,6 +96,7 @@ def generate_answer(prompt):
         [llm_instructions, message],
         max_new_tokens=256,
         eos_token_id=llm_terminators,
+        pad_token_id=None,
         do_sample=True,
         temperature=0.6,
         top_p=0.9
@@ -145,11 +149,11 @@ def run_stt_to_llm():
         result = stt_recognize()
         #Test if we recognized any speech
         if result:
-            print("Recognized text was:", result)
+            if debug: print("Recognized text was:", result)
             #Pass to LLM
             print("EPI is thinking....")
             answer = generate_answer(result)
-            print("Answer was:", answer)
+            if debug: print("Answer was:", answer)
             #Pass to TTS
             stream.stop()
             print("EPI is talking")
@@ -166,6 +170,8 @@ def run_stt_to_llm():
 
 if __name__ == "__main__":
     try:
+        for _ in range(100):
+            print()
         run_stt_to_llm()
     except KeyboardInterrupt as k:
         print("Goodbye!")
@@ -174,3 +180,8 @@ if __name__ == "__main__":
 
 
 #run with "python3 modeltest.py"
+
+
+#Summering: 
+# Allt fungerar jättebra, såvida vi får en maskin med en RTX 4+70/4080 att köra på. Att köra en LLM lokalt kräver en del resurser....
+# STT kommer inte kunna identifiera "EPI" som ord, såvida vi inte tränar den. Vilket kräver en bättre maskin än vår laptop.
