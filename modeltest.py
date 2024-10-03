@@ -57,7 +57,7 @@ tts_volume_desired = 1.0
 tts_rate_desired = 125
 
 tts_voice = 69 # Ok voices seem to be 88(male), 69(female), 2, 3, 13
-#Funny values on the above (robotic/strange): 40, 61, 87, 113, 118, 139, 140, 144
+#Funny values on the above (robotic/strange): 40, 61, 87, 113, 118, 139, 140, 144  (87 is scary and singing!!)
 
 tts_engine = pyttsx3.init()
 
@@ -71,6 +71,8 @@ print("Default tts volume is:", tts_volume)
 tts_engine.setProperty('volume',tts_volume_desired)
 print("Our tts volume is:", tts_volume_desired)
 
+"sv"
+"sv_SE"
 tts_voices = list(filter(lambda x: 'sv' in x.languages, tts_engine.getProperty('voices')))
 if len(tts_voices) == 0:
     tts_voices = tts_engine.getProperty('voices')
@@ -461,7 +463,7 @@ if __name__ == "__main__":
 #then run with "python3 modeltest.py"
 
 
-#Om ikaros kraschar så öka -r25 till -r250
+#Om ikaros kraschar så öka -r25 till -r250 ovan
 #
 
 #Problem: 
