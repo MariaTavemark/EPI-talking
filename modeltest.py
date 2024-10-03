@@ -46,8 +46,8 @@ except Exception as err:
 
 
 
-
-
+# Set below to "sv" or "en" to change language of EPI
+language = "sv"
 
 
 #Initialize TTS variables
@@ -56,8 +56,15 @@ tts_volume_desired = 1.0
 #Mess with the below to change rate of speech
 tts_rate_desired = 125
 
-tts_voice = 69 # Ok voices seem to be 88(male), 69(female), 2, 3, 13
+
+#DEPRECATED, USE tts_voice_name below
+#tts_voice = 69 # Ok voices seem to be 88(male), 69(female), 2, 3, 13
 #Funny values on the above (robotic/strange): 40, 61, 87, 113, 118, 139, 140, 144  (87 is scary and singing!!)
+
+if language == "sv":
+    tts_voice_name = "Alva (Premium)"
+else:
+    tts_voice_name = "Sandy (English (US))"
 
 tts_engine = pyttsx3.init()
 
@@ -71,13 +78,22 @@ print("Default tts volume is:", tts_volume)
 tts_engine.setProperty('volume',tts_volume_desired)
 print("Our tts volume is:", tts_volume_desired)
 
-"sv"
-"sv_SE"
-tts_voices = list(filter(lambda x: 'sv' in x.languages, tts_engine.getProperty('voices')))
+sv_lang_codes = ["sv", "sv_SE"]
+en_lang_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
+
+if language == "sv":
+    lang_codes = sv_lang_codes
+else:
+    lang_codes = en_lang_codes
+
+tts_voices = list(filter(lambda x: any([True for c in lang_codes if c in x.languages]), tts_engine.getProperty('voices')))
 if len(tts_voices) == 0:
     tts_voices = tts_engine.getProperty('voices')
-print("Available tts voices: 0 to ", len(tts_voices) - 1)
-tts_engine.setProperty('voice', tts_voices[tts_voice].id) 
+
+print("Available tts voices: ", len(tts_voices))
+
+tts_voice = next((x.id for x in tts_voices if x.name == tts_voice_name), None)
+tts_engine.setProperty('voice', tts_voice if tts_voice else tts_voices[0].id) 
 print("Our tts voice choice is:", tts_voice)
 
 
@@ -88,7 +104,11 @@ stt_queue = queue.Queue()
 stt_device = sounddevice.query_devices(kind='input')
 stt_sample_rate = int(stt_device["default_samplerate"])
 
-stt_model_name= "vosk-model-small-sv-rhasspy-0.15"
+if language == "sv":
+    stt_model_name= "vosk-model-small-sv-rhasspy-0.15"
+else:
+    stt_model_name= "vosk-model-en-us-0.22"
+
 stt_model = vosk.Model(stt_model_name)
 stt_chunk_size = 8000 #4096
 stt = vosk.KaldiRecognizer(stt_model, stt_sample_rate)
@@ -187,11 +207,19 @@ llm_output_token_cost = {
     "o1-preview-2024-09-12": 0.000618,
 }
 
-llm_instructions = {"role": "system", "content": """
+if language == "sv":
+    llm_instructions = {"role": "system", "content": """
 Du är EPI, en gullig robot som ska prata med sina vänner och känna igen dem. Du kan visa känslor, men ska 
 generellt sett vara glad och snäll. Du får aldrig diskriminera någon. Användaren kan inte säga ditt namn på grund av dålig taligenkänning, så
 om användaren verkar kalla dig något annat namn ska du ignorera det och fortsätta som vanligt. Använd inte några specialtecken i dina svar, utan bara a till ö och skiljetecken.
 Avsluta ditt svar med att skriva en av följande fraser, baserat på hur EPI känner sig: arg, glad, ledsen, neutral
+"""}
+else:
+    llm_instructions = {"role": "system", "content": """
+You are EPI, a cute robot who wants to talk to its friends and recognize them. You can show emotions, but you are generally happpy and nice.
+The user cannot say your name due to bad speech recognition, so if they call you a different name - just ignore it and reply as usual.
+Do not use any special characters in your answers, you may only use a-z and basic delimeters.
+End your answer by writing a single word out of the following, based on how EPI is feeling: angry, happy, sad, neutral
 """}
 
 llm_message_history = [llm_instructions]
@@ -301,7 +329,7 @@ def epi_angry():
 def epi_shake_head():
     num_shakes = 2
     degrees = 20
-    delay = 0.02
+    delay = 0.03 #About 30 Hz
 
     for i in range(num_shakes):
         for j in range(-degrees, degrees):
@@ -314,7 +342,7 @@ def epi_nod():
     num_shakes = 2
     min_degrees = 0
     max_degrees = 15
-    delay = 0.02
+    delay = 0.03 # About 30 Hz
 
     for i in range(num_shakes):
         for j in range(min_degrees, max_degrees):
@@ -390,22 +418,29 @@ def run_stt_to_llm():
             print("EPI said: ", " ".join(answer[:-1]))
             mood:str = answer[-1:][0]
 
-            if "glad" in mood.lower():
+            happy_moods = ["glad", "happy"]
+            angry_moods = ["arg", "angry"]
+            sad_moods = ["ledsen", "sad"]
+            neutral_moods = ["neutral", "neutral"]
+
+            if any([True for x in happy_moods if x in mood.lower()]):
                 print("EPI is happy")
                 epi_happy()
-            elif "arg" in mood.lower():
+            elif any([True for x in angry_moods if x in mood.lower()]):
                 print("EPI is angry")
                 epi_angry()
-            elif "ledsen" in mood.lower():
+            elif any([True for x in sad_moods if x in mood.lower()]):
                 print("EPI is sad")
                 epi_sad()
             else:
                 print("Epi had the mood", mood.lower())
                 epi_neutral()
-
-            if "nej" in answer[:-1] or "Nej" in answer[:-1]:
+            
+            no_codes = ["nej,", "nej", "nej.", "nej!", "nej?", "no,", "no", "no.", "no!", "no?"]
+            yes_codes = ["ja,", "ja", "ja.", "ja!", "ja?", "yes,", "yes", "yes.", "yes!", "yes?"]
+            if any([True for x in answer[:-1] if x.lower() in no_codes]):
                 epi_shake_head()
-            elif "ja" in answer[:-1] or "Ja" in answer[:-1]:
+            elif any([True for x in answer[:-1] if x.lower() in yes_codes]):
                 epi_nod()
 
             tts_engine.say(" ".join(answer[:-1]))

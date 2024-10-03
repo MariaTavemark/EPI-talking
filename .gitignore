@@ -7,7 +7,7 @@ __pycache__/
 *.so
 
 vosk-model-small-sv-rhasspy-0.15/
-
+vosk*/
 # Distribution / packaging
 .Python
 build/
