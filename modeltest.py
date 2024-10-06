@@ -12,6 +12,9 @@ from openai import OpenAI
 import json
 import openai
 
+# Local LLM:
+import ollama
+
 
 #STT:
 import vosk
@@ -29,20 +32,24 @@ import requests
 debug = False
 
 
+#LLM "local" or "online"
+llm_type = "local"
+
 #LLM key file config
-default_keyfile = "/Volumes/MARIAT/openai.txt"
-try:
-    if not os.path.isfile(default_keyfile):
-        print("Please select the key-file")
-        Tk().withdraw()
-        keyfile_path = askopenfilename()
-    else:
-        keyfile_path = default_keyfile
-    keyfile = open(keyfile_path, 'r')
-    llm_org, llm_proj, llm_api_key = [k.removesuffix("\n") for k in keyfile.readlines()]
-except Exception as err:
-    print("There was an error when opening the key-file. Shutting down.", err)
-    exit(1)
+if llm_type == "online":
+    default_keyfile = "/Volumes/MARIAT/openai.txt"
+    try:
+        if not os.path.isfile(default_keyfile):
+            print("Please select the key-file")
+            Tk().withdraw()
+            keyfile_path = askopenfilename()
+        else:
+            keyfile_path = default_keyfile
+        keyfile = open(keyfile_path, 'r')
+        llm_org, llm_proj, llm_api_key = [k.removesuffix("\n") for k in keyfile.readlines()]
+    except Exception as err:
+        print("There was an error when opening the key-file. Shutting down.", err)
+        exit(1)
 
 
 
@@ -167,17 +174,39 @@ epi_valid_ranges = {
 
 
 
-# Initialize LLM Variables
-llm_model="gpt-4o-mini"
+# Initialize online LLM Variables
+
 
 #How random the answers should be [0.0-2.0]
 llm_temperature = 0.8
 
-llm_client = OpenAI(
-    organization=llm_org,
-    project=llm_proj,
-    api_key=llm_api_key
-)
+if language == "sv":
+    llm_instructions = {"role": "system", "content": """
+Du är EPI, en gullig robot som ska prata med sina vänner och känna igen dem. Du kan visa känslor, men ska 
+generellt sett vara glad och snäll. Du får aldrig diskriminera någon. Användaren kan inte säga ditt namn på grund av dålig taligenkänning, så
+om användaren verkar kalla dig något annat namn ska du ignorera det och fortsätta som vanligt. Använd inte några specialtecken i dina svar, utan bara a till ö och skiljetecken.
+Avsluta ditt svar med att skriva en av följande fraser, baserat på hur EPI känner sig: arg, glad, ledsen, neutral
+"""}
+else:
+    llm_instructions = {"role": "system", "content": """
+You are EPI, a cute robot who wants to talk to its friends and recognize them. You can show emotions, but you are generally happpy and nice.
+The user cannot say your name due to bad speech recognition, so if they call you a different name - just ignore it and reply as usual.
+Do not use any special characters in your answers, you may only use a-z and basic delimeters.
+End your answer by writing a single word out of the following, based on how EPI is feeling: angry, happy, sad, neutral
+"""}
+
+llm_message_history = [llm_instructions]
+
+
+if llm_type == "online":
+    llm_model="gpt-4o-mini"
+    llm_client = OpenAI(
+        organization=llm_org,
+        project=llm_proj,
+        api_key=llm_api_key
+    )
+elif llm_type == "local":
+    llm_model = "llama2"
 
 #Just for fun
 llm_input_token_count = 0
@@ -207,23 +236,6 @@ llm_output_token_cost = {
     "o1-preview-2024-09-12": 0.000618,
 }
 
-if language == "sv":
-    llm_instructions = {"role": "system", "content": """
-Du är EPI, en gullig robot som ska prata med sina vänner och känna igen dem. Du kan visa känslor, men ska 
-generellt sett vara glad och snäll. Du får aldrig diskriminera någon. Användaren kan inte säga ditt namn på grund av dålig taligenkänning, så
-om användaren verkar kalla dig något annat namn ska du ignorera det och fortsätta som vanligt. Använd inte några specialtecken i dina svar, utan bara a till ö och skiljetecken.
-Avsluta ditt svar med att skriva en av följande fraser, baserat på hur EPI känner sig: arg, glad, ledsen, neutral
-"""}
-else:
-    llm_instructions = {"role": "system", "content": """
-You are EPI, a cute robot who wants to talk to its friends and recognize them. You can show emotions, but you are generally happpy and nice.
-The user cannot say your name due to bad speech recognition, so if they call you a different name - just ignore it and reply as usual.
-Do not use any special characters in your answers, you may only use a-z and basic delimeters.
-End your answer by writing a single word out of the following, based on how EPI is feeling: angry, happy, sad, neutral
-"""}
-
-llm_message_history = [llm_instructions]
-
 #Metod som ger svar baserat på en prompt/fråga
 def generate_answer(prompt):
     global llm_input_token_count
@@ -231,23 +243,27 @@ def generate_answer(prompt):
 
     message = {"role": "user", "content": prompt}
     llm_message_history.append(message)
-    out = llm_client.chat.completions.create(
-        model=llm_model,
-        messages=llm_message_history,
-        temperature=llm_temperature,
-        n=1,
-        max_completion_tokens=1000,
-        timeout=10
-    )
+    if llm_type == "online":
+        out = llm_client.chat.completions.create(
+            model=llm_model,
+            messages=llm_message_history,
+            temperature=llm_temperature,
+            n=1,
+            max_completion_tokens=1000,
+            timeout=10
+        )
 
-    reply = out.choices[0].message.content
-    role = out.choices[0].message.role
-    llm_message_history.append({"role": role, "content": reply})
+        reply = out.choices[0].message.content
+        role = out.choices[0].message.role
+        llm_message_history.append({"role": role, "content": reply})
 
-    llm_input_token_count += out.usage.prompt_tokens
-    llm_output_token_count += out.usage.completion_tokens
+        llm_input_token_count += out.usage.prompt_tokens
+        llm_output_token_count += out.usage.completion_tokens
     
-    return reply
+        return reply
+    else:
+        response = ollama.chat(model=llm_model, messages=llm_message_history)
+        return response['message']['content']
 
 
 def stt_recognize():
