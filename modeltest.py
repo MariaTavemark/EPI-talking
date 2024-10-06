@@ -400,10 +400,17 @@ def start_ikaros():
             row =  ikaros_server.stdout.readline().decode("utf-8")
             print("Ikaros said: " + row)
             started_string = "IKAROS: 1 WARNING."
+            starting_string = "Power off servos."
             if started_string in row:
                 print("Ikaros has started, waiting for motors to power on..")
                 time.sleep(5)
                 ikaros_started = True
+            if starting_string in row:
+                print("Ikaros will be started in 15 seconds")
+                time.sleep(15)
+                if ikaros_server.poll() is None:
+                    ikaros_started = True
+                    print("Ikaros has started!")
         time.sleep(0.2)
     return ikaros_server
 
