@@ -462,10 +462,11 @@ def epi_shake_head():
     degrees = 20
     delay = 0.03 #About 30 Hz
 
+    step = 4
     shake_moves = []
-    shake_moves.extend(range(0, -degrees, -2))
-    shake_moves.extend(range(-degrees, degrees, 2))
-    shake_moves.extend(range(degrees, 0, -2))
+    shake_moves.extend(range(0, -degrees, -step))
+    shake_moves.extend(range(-degrees, degrees, step))
+    shake_moves.extend(range(degrees, 0 + step, -step))
 
     for i in range(num_shakes):
         for j in shake_moves:
@@ -480,16 +481,16 @@ def epi_nod():
     max_degrees = 15
     delay = 0.03 # About 30 Hz
 
+    step = 4
     nod_moves = []
-    nod_moves.extend(range(0, min_degrees, -2))
-    nod_moves.extend(range(min_degrees, max_degrees, 2))
-    nod_moves.extend(range(max_degrees, 0, -2))
+    nod_moves.extend(range(0, min_degrees, -step))
+    nod_moves.extend(range(min_degrees, max_degrees, step))
+    nod_moves.extend(range(max_degrees, 0 + step, -step))
 
     for i in range(num_shakes):
         for j in nod_moves:
             control_epi("neck_tilt", j)
             time.sleep(delay)
-
     control_epi("neck_tilt", 0)
 
 
