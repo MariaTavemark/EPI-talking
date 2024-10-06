@@ -129,7 +129,6 @@ epi_control_path = "/control/SR.positions/"
 #####################################
 
 #Global
-import asyncio
 import sys
 import select
 
@@ -463,8 +462,13 @@ def epi_shake_head():
     degrees = 20
     delay = 0.03 #About 30 Hz
 
+    shake_moves = []
+    shake_moves.extend(range(0, -degrees, -2))
+    shake_moves.extend(range(-degrees, degrees, 2))
+    shake_moves.extend(range(degrees, 0, -2))
+
     for i in range(num_shakes):
-        for j in range(-degrees, degrees, 2):
+        for j in shake_moves:
             control_epi("neck_pan", j)
             time.sleep(delay)
 
@@ -476,8 +480,13 @@ def epi_nod():
     max_degrees = 15
     delay = 0.03 # About 30 Hz
 
+    nod_moves = []
+    nod_moves.extend(range(0, min_degrees, -2))
+    nod_moves.extend(range(min_degrees, max_degrees, 2))
+    nod_moves.extend(range(max_degrees, 0, -2))
+
     for i in range(num_shakes):
-        for j in range(min_degrees, max_degrees, 2):
+        for j in nod_moves:
             control_epi("neck_tilt", j)
             time.sleep(delay)
 
@@ -550,6 +559,7 @@ def run_stt_to_llm():
         if epi_paused:
             time.sleep(0.2)
             continue
+
         result = stt_recognize()
         #Test if we recognized any speech
         if result:
