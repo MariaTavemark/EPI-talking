@@ -126,8 +126,8 @@ nrServosTotal = "19"
 
 	<!-- Speeking
 	<module class =	"FunctionGenerator" name =	"Speek" type =	"sin" frequency =	"10"
-		offset      =	"0.5" amplitude =	"0" shift =	"0.1" />
-	<connection source = "Speek.OUTPUT"  target = "LED.SPEEKING" /> -->
+		offset      =	"0.5" amplitude =	"0" shift =	"0.1" />-->
+	<connection source = "Speek.OUTPUT"  target = "LED.SPEEKING" /> 
 
 
 
