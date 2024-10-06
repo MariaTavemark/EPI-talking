@@ -499,20 +499,17 @@ def newTTSthread():
 
 
 # Method to check if we should pause EPI
-async def checkKeypress():
+def checkKeypress():
     global epi_paused
     global llm_message_history
-
-    while True:
-        await asyncio.sleep(0.1)
-        while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-            ch = sys.stdin.read(1)
-            if ch == 'p':
-                epi_paused = not epi_paused
-                print("EPI is now " + ("" if not epi_paused else "not ") + "listening. Press 'p' to make EPI " + ("" if epi_paused else "not ") + "listen")
-            elif ch == 'r':
-                llm_message_history = [llm_instructions]
-                print("Chat history cleared, the conversation with EPI has now started over.")
+    while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+        ch = sys.stdin.read(1)
+        if ch == 'p':
+            epi_paused = not epi_paused
+            print("EPI is now " + ("" if not epi_paused else "not ") + "listening. Press 'p' to make EPI " + ("" if epi_paused else "not ") + "listen")
+        elif ch == 'r':
+            llm_message_history = [llm_instructions]
+            print("Chat history cleared, the conversation with EPI has now started over.")
 
 
 def run_stt_to_llm():
@@ -544,14 +541,6 @@ def run_stt_to_llm():
     while tts_thread.is_alive():
         time.sleep(0.1)
         print("Hej-loop")
-
-    loop = asyncio.new_event_loop()
-    print("Created loop")
-    loop.create_task(checkKeypress())
-    print("Created task")
-    loop_thread = threading.Thread(target=loop.run_forever())
-    print("Test")
-    loop_thread.start()
     
     print("EPI is listening")
     print("To make EPI pause (and not listen), press 'p'")
