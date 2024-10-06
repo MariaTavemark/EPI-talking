@@ -100,9 +100,9 @@
 
 <module class = "Constant" name = "LedOff" data = "0 0 0" />
 
-<module class = "Arbiter" name = "MouthArbiter" no_of_inputs = "1" />
+<module class = "Arbiter" name = "MouthArbiter" no_of_inputs = "2" />
     <input name = "MOUTH_COLOR"                 target = "MouthArbiter.INPUT_1" />
-   <!--<input name = "SPEEKING"                    target = "MouthArbiter.VALUE_1" />-->
+    <!--<input name = "SPEEKING"                    target = "MouthArbiter.VALUE_1" />-->
     <connection source = "LedOff.OUTPUT"        target = "MouthArbiter.INPUT_2" />
     <connection source = "NoLEDValue.OUTPUT"    target = "MouthArbiter.VALUE_2" />
 
