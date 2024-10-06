@@ -308,11 +308,12 @@ if llm_type == "online":
     )
 elif llm_type == "local":
     llm_model = llm_local_model
-    llm_server = subprocess.Popen(llm_local_command.split(" "), env=llm_local_env)
+    llm_server = subprocess.Popen(llm_local_command.split(" "), env=llm_local_env, stdout=subprocess.PIPE)
     llm_started = False
     while not llm_started:
         print("Local LLM not yet started...")
-        llm_started = "Listening on" in llm_server.stdout.readline().decode("utf-8")
+        if llm_started:
+            llm_started = "Listening on" in llm_server.stdout.readline().decode("utf-8")
         time.sleep(1)
 
     llm_client = ollama.Client(host="http://127.0.0.1:" + str(llm_local_port))
