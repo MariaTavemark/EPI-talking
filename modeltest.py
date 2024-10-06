@@ -106,6 +106,8 @@ tts_sv_voice = "Alva (Premium)"
 #Which voice should we use for english?
 tts_en_voice = "Sandy (English (US))"
 
+#What base pitch do we want? Does not seem to work... In Hz.
+tts_desired_pitch_base = 800
 
 #####################################
 #                                   #
@@ -195,14 +197,8 @@ else:
     lang_codes = en_lang_codes
 
 tts_engine = pyttsx3.init()
-if debug:
-    tts_rate = tts_engine.getProperty('rate') 
-    print("Default speaking rate is:", tts_rate)
-    tts_volume = tts_engine.getProperty('volume')
-    print("Default tts volume is:", tts_volume)
-    print("Our speaking rate is:", tts_rate_desired)
-    print("Our tts volume is:", tts_volume_desired)
-    print("Our tts voice choice is:", tts_voice_name)
+tts_rate = tts_engine.getProperty('rate') 
+tts_volume = tts_engine.getProperty('volume')
 
 tts_engine.setProperty('rate', tts_rate_desired) 
 tts_engine.setProperty('volume',tts_volume_desired)
@@ -219,9 +215,19 @@ if tts_voice is None:
     exit(1)
 
 tts_engine.setProperty('voice', tts_voice if tts_voice else tts_voices[0].id) 
-print("Pitch_base before: " + str(tts_engine.proxy._driver._tts._pitchBase()))
-tts_engine.proxy._driver._tts._setPitchBase_(400)
-print("Pitch_base after: " + str(tts_engine.proxy._driver._tts._pitchBase()))
+pitch_base = str(tts_engine.proxy._driver._tts._pitchBase())
+tts_engine.proxy._driver._tts._setPitchBase_(tts_desired_pitch_base)
+
+
+if debug:
+    print("Default speaking rate is:", tts_rate)
+    print("Default tts volume is:", tts_volume)
+    print("Our speaking rate is:", tts_rate_desired)
+    print("Our tts volume is:", tts_volume_desired)
+    print("Our tts voice choice is:", tts_voice_name)
+    print("Pitch_base before: " + pitch_base)
+    print("Pitch_base after: " + str(tts_engine.proxy._driver._tts._pitchBase()))
+
 
 #Initialize STT variables
 stt_queue = queue.Queue()
@@ -497,7 +503,6 @@ def epi_nod():
 def epi_thinking():
     control_epi("left_pupil", 0)
     control_epi("right_pupil", 0)
-    time.sleep(0.1)
 
 
 def epi_done_thinking():
@@ -568,11 +573,11 @@ def run_stt_to_llm():
             if debug: print("Recognized text was:", result)
             print("You said:", result)
             #Pass to LLM
-            epi_thinking()
+            threading.Thread(target=epi_thinking()).start()
             print("EPI is thinking....")
             answer = generate_answer(result).split()
             if debug: print("Answer was:", answer)
-            epi_done_thinking()
+            threading.Thread(target=epi_done_thinking()).start()
 
             #Pass to TTS
             stream.stop()
