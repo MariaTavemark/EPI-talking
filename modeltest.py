@@ -35,7 +35,16 @@ llm_local_model = "llama3.2:3b"
 llm_local_port = 8888
 
 #How do you run the local llm?
-llm_local_command = 'OLLAMA_HOST="127.0.0.1:' + str(llm_local_port) + '" ollama serve'
+llm_local_command = "ollama serve"
+
+#Where is ollama?
+llm_local_bin = "/usr/local/bin/"
+
+#What should the local llm environment variables be?
+llm_local_env = {
+    'OLLAMA_HOST': "127.0.0.1:" + str(llm_local_port),
+    "PATH": llm_local_bin
+                 }
 
 #How random the answers should be [0.0-2.0]
 llm_temperature = 0.8
@@ -295,7 +304,7 @@ if llm_type == "online":
     )
 elif llm_type == "local":
     llm_model = llm_local_model
-    llm_server = subprocess.Popen(llm_local_command.split(" "))
+    llm_server = subprocess.Popen(llm_local_command.split(" "), env=llm_local_env)
     llm_started = False
     while not llm_started:
         print("Local LLM not yet started...")
@@ -529,7 +538,7 @@ def run_stt_to_llm():
     loop = asyncio.get_event_loop()
     loop.create_task(checkKeypress())
     loop.run_forever()
-    
+
     print("EPI is listening")
     print("To make EPI pause (and not listen), press 'p'")
     print("Press 'r' to reset the conversation with EPI")
