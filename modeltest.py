@@ -386,7 +386,7 @@ llm_output_token_cost = {
 #############################################################################################################################
 # Start ikaros
 def start_ikaros():
-    ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
     ikaros_started = False
     while not ikaros_started:
         print("Ikaros has not yet started...")
@@ -394,16 +394,12 @@ def start_ikaros():
             print("Ikaros has crashed...")
             for row in ikaros_server.stdout.readlines():
                 print("Ikaros said: " + row.decode("utf-8"))
-            for row in ikaros_server.stderr.readlines():
-                print("Ikaros said: " + row.decode("utf-8"))
-            ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+            ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         elif ikaros_server:
             row =  ikaros_server.stdout.readline().decode("utf-8")
-            errow = ikaros_server.stderr.readline().decode("utf-8")
             print("Ikaros said: " + row)
-            print("Ikaros said: " + errow)
             started_string = "Power off servos."
-            if started_string in row or started_string in errow:
+            if started_string in row:
                 print("Ikaros has started, waiting for motors to power on..")
                 time.sleep(5)
                 ikaros_started = True
