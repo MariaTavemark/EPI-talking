@@ -98,12 +98,12 @@ nrServosTotal = "19"
 	<!-- The robot can "speak" by playing mp3 files. -->
 	<!-- You can have multiple sounds that can be triggered seperatly. -->
 	<!-- Default sounds from https://github.com/pierreklintefors/GiveARobotAVoice -->
-	<module
+	<!--<module
 	    class = "SoundOutput"
 		name = "SoundOutput"
 		sounds  = "Sounds/trimmed_epi_hello.mp3, Sounds/0-10.m4a, Sounds/10-20.m4a, Sounds/20-30.m4a, Sounds/30-40.m4a, Sounds/40-50.m4a, Sounds/50-60.m4a, Sounds/60-70.m4a, Sounds/70-80.m4a, Sounds/80+.m4a, Sounds/confused_1.wav, Sounds/confused_2.wav, Sounds/confused_3.wav, Sounds/confused_4.wav, Sounds/confused_5.wav, Sounds/disagree_1.wav, Sounds/disagree_2.wav, Sounds/disagree_3.wav, Sounds/disagree_4.wav, Sounds/disagree_5.wav, Sounds/disgusted_1.wav, Sounds/disgusted_2.wav, Sounds/disgusted_3.wav, Sounds/disgusted_4.wav, Sounds/disgusted_5.wav, Sounds/pleased_1.wav, Sounds/pleased_2.wav, Sounds/pleased_3.wav, Sounds/pleased_4_med_2.wav, Sounds/pleased_5.wav,Sounds/Jokes/WhyDidTheRobotSneeze.wav,Sounds/Jokes/WhyDidTheRobotSneezeB.wav,Sounds/Jokes/HowDidTheRobotGetAcrossTheRiver.wav,Sounds/Jokes/HowDidTheRobotGetAcrossTheRiverB.wav,Sounds/Jokes/WhyDidTheRobotGoOnVacation.wav,Sounds/Jokes/WhyDidTheRobotGoOnVacationB.wav,HiIAmARobot.HowOldAmI_low.wav,HiIAmARobot.HowOldAmI_high.wav"
         command = "/usr/bin/afplay" 
-	/>	
+	/>	-->
 
 	<!-- 			LED			 			-->
 	<!-- ********************************* 	-->
@@ -124,10 +124,10 @@ nrServosTotal = "19"
 	<!-- This line imports a seperate ikc file with all the LED connections. -->
 	<module class = "EpiLed" name = "LED" />
 
-	<!-- Speeking -->
+	<!-- Speeking
 	<module class =	"FunctionGenerator" name =	"Speek" type =	"sin" frequency =	"10"
 		offset      =	"0.5" amplitude =	"0" shift =	"0.1" />
-	<connection source = "Speek.OUTPUT"  target = "LED.SPEEKING" />
+	<connection source = "Speek.OUTPUT"  target = "LED.SPEEKING" /> -->
 
 
 

@@ -1,5 +1,117 @@
 #/Users/epi/miniforge3/bin/python3
 
+#####################################
+#                                   #
+#          BEGIN OF CONFIG          #
+#                                   #
+#####################################
+
+#####################################
+#                                   #
+#        Project-wide config        #
+#                                   #
+#####################################
+debug = False
+
+# Set below to "sv" or "en" to change language of EPI
+language = "sv"
+
+#####################################
+#                                   #
+#           LLM config              #
+#                                   #
+#####################################
+#LLM "local" or "online"
+llm_type = "local"
+
+#Which LLM should we use in online-mode?
+llm_online_model = "gpt-4o-mini"
+llm_online_default_keyfile = "/Volumes/MARIAT/openai.txt"
+
+#Which LLM should we use in local-mode?
+llm_local_model = "llama2"
+
+#How random the answers should be [0.0-2.0]
+llm_temperature = 0.8
+
+#LLM base prompt in swedish
+llm_sv_instructions = {"role": "system", "content": """
+Du är EPI, en gullig robot som ska prata med sina vänner och känna igen dem. Du kan visa känslor, men ska 
+generellt sett vara glad och snäll. Du får aldrig diskriminera någon. Användaren kan inte säga ditt namn på grund av dålig taligenkänning, så
+om användaren verkar kalla dig något annat namn ska du ignorera det och fortsätta som vanligt. Använd inte några specialtecken i dina svar, utan bara a till ö och skiljetecken.
+Avsluta ditt svar med att skriva en av följande fraser, baserat på hur EPI känner sig: arg, glad, ledsen, neutral
+"""}
+
+#LLM base prompt in english
+llm_en_instructions = {"role": "system", "content": """
+You are EPI, a cute robot who wants to talk to its friends and recognize them. You can show emotions, but you are generally happpy and nice.
+The user cannot say your name due to bad speech recognition, so if they call you a different name - just ignore it and reply as usual.
+Do not use any special characters in your answers, you may only use a-z and basic delimeters.
+End your answer by writing a single word out of the following, based on how EPI is feeling: angry, happy, sad, neutral
+"""}
+
+
+#####################################
+#                                   #
+#           STT config              #
+#                                   #
+#####################################
+
+#Which stt model should we use for swedish?
+stt_sv_model = "vosk-model-small-sv-rhasspy-0.15"
+
+#Which stt model should we use for english?
+stt_en_model = "vosk-model-en-us-0.22"
+
+#How large chunks (number of samples) should the STT use?
+stt_chunk_size = 8000
+
+#####################################
+#                                   #
+#            TTS config             #
+#                                   #
+#####################################
+
+#What volume should we use (0.0-1.0)?
+tts_volume_desired = 1.0
+
+#How fast should we speak swedish?
+tts_sv_rate_desired = 125
+
+#How fast should we speak english?
+tts_en_rate_desired = 125
+
+#Which voice should we use for swedish?
+tts_sv_voice = "Alva (Premium)"
+
+#Which voice should we use for english?
+tts_en_voice = "Sandy (English (US))"
+
+
+#####################################
+#                                   #
+#             EPI config            #
+#                                   #
+#####################################
+
+#Where can we reach Ikaros?
+epi_url = "http://127.0.0.1:8000"
+
+#What is the URL to control EPI?
+epi_control_path = "/control/SR.positions/"
+
+
+
+#####################################
+#                                   #
+#          END OF CONFIG            #
+#   DO NOT CHANGE BELOW THIS BLOCK  #
+#                                   #
+#####################################
+
+
+
+
 #LLM key file choosing
 from random import random
 import time
@@ -29,22 +141,15 @@ import threading
 #EPI:
 import requests
 
-debug = False
-
-
-#LLM "local" or "online"
-llm_type = "local"
-
 #LLM key file config
 if llm_type == "online":
-    default_keyfile = "/Volumes/MARIAT/openai.txt"
     try:
-        if not os.path.isfile(default_keyfile):
+        if not os.path.isfile(llm_online_default_keyfile):
             print("Please select the key-file")
             Tk().withdraw()
             keyfile_path = askopenfilename()
         else:
-            keyfile_path = default_keyfile
+            keyfile_path = llm_online_default_keyfile
         keyfile = open(keyfile_path, 'r')
         llm_org, llm_proj, llm_api_key = [k.removesuffix("\n") for k in keyfile.readlines()]
     except Exception as err:
@@ -52,46 +157,32 @@ if llm_type == "online":
         exit(1)
 
 
-
-# Set below to "sv" or "en" to change language of EPI
-language = "sv"
-
-
 #Initialize TTS variables
-#Change below to change volume (0.0-1.0)
-tts_volume_desired = 1.0
-#Mess with the below to change rate of speech
-tts_rate_desired = 125
-
-
-#DEPRECATED, USE tts_voice_name below
-#tts_voice = 69 # Ok voices seem to be 88(male), 69(female), 2, 3, 13
-#Funny values on the above (robotic/strange): 40, 61, 87, 113, 118, 139, 140, 144  (87 is scary and singing!!)
-
-if language == "sv":
-    tts_voice_name = "Alva (Premium)"
-else:
-    tts_voice_name = "Sandy (English (US))"
-
-tts_engine = pyttsx3.init()
-
-tts_rate = tts_engine.getProperty('rate') 
-print("Default speaking rate is:", tts_rate)
-tts_engine.setProperty('rate', tts_rate_desired) 
-print("Our speaking rate is:", tts_rate_desired)
-
-tts_volume = tts_engine.getProperty('volume')
-print("Default tts volume is:", tts_volume)
-tts_engine.setProperty('volume',tts_volume_desired)
-print("Our tts volume is:", tts_volume_desired)
-
 sv_lang_codes = ["sv", "sv_SE"]
 en_lang_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
 
 if language == "sv":
+    tts_voice_name = tts_sv_voice
+    tts_rate_desired = tts_sv_rate_desired
     lang_codes = sv_lang_codes
 else:
+    tts_voice_name = tts_en_voice
+    tts_rate_desired = tts_en_rate_desired
     lang_codes = en_lang_codes
+
+tts_engine = pyttsx3.init()
+
+if debug:
+    tts_rate = tts_engine.getProperty('rate') 
+    print("Default speaking rate is:", tts_rate)
+    tts_volume = tts_engine.getProperty('volume')
+    print("Default tts volume is:", tts_volume)
+    print("Our speaking rate is:", tts_rate_desired)
+    print("Our tts volume is:", tts_volume_desired)
+    print("Our tts voice choice is:", tts_voice_name)
+
+tts_engine.setProperty('rate', tts_rate_desired) 
+tts_engine.setProperty('volume',tts_volume_desired)
 
 tts_voices = list(filter(lambda x: any([True for c in lang_codes if c in x.languages]), tts_engine.getProperty('voices')))
 if len(tts_voices) == 0:
@@ -100,8 +191,11 @@ if len(tts_voices) == 0:
 print("Available tts voices: ", len(tts_voices))
 
 tts_voice = next((x.id for x in tts_voices if x.name == tts_voice_name), None)
+if tts_voice is None:
+    print("Could not find TTS voice", tts_voice_name)
+    exit(1)
+
 tts_engine.setProperty('voice', tts_voice if tts_voice else tts_voices[0].id) 
-print("Our tts voice choice is:", tts_voice)
 
 
 
@@ -112,12 +206,11 @@ stt_device = sounddevice.query_devices(kind='input')
 stt_sample_rate = int(stt_device["default_samplerate"])
 
 if language == "sv":
-    stt_model_name= "vosk-model-small-sv-rhasspy-0.15"
+    stt_model_name= stt_sv_model
 else:
-    stt_model_name= "vosk-model-en-us-0.22"
+    stt_model_name= stt_en_model
 
-stt_model = vosk.Model(stt_model_name)
-stt_chunk_size = 8000 #4096
+stt_model = vosk.Model(stt_model_name) 
 stt = vosk.KaldiRecognizer(stt_model, stt_sample_rate)
 
 # Method that is called whenever the audio stream gets data. Put audio in queue to be processed.
@@ -132,10 +225,7 @@ stream = sounddevice.RawInputStream(samplerate=stt_sample_rate, blocksize = stt_
 
 
 
-# Initialize EPI-head variables
-epi_url = "http://127.0.0.1:8000"
-epi_control_path = "/control/SR.positions/"
-
+# Initialize EPI-head variable
 epi_channels = {
     "neck_tilt": 0,
     "neck_pan": 1,
@@ -174,39 +264,24 @@ epi_valid_ranges = {
 
 
 
-# Initialize online LLM Variables
-
-
-#How random the answers should be [0.0-2.0]
-llm_temperature = 0.8
-
+# Initialize LLM Variables
 if language == "sv":
-    llm_instructions = {"role": "system", "content": """
-Du är EPI, en gullig robot som ska prata med sina vänner och känna igen dem. Du kan visa känslor, men ska 
-generellt sett vara glad och snäll. Du får aldrig diskriminera någon. Användaren kan inte säga ditt namn på grund av dålig taligenkänning, så
-om användaren verkar kalla dig något annat namn ska du ignorera det och fortsätta som vanligt. Använd inte några specialtecken i dina svar, utan bara a till ö och skiljetecken.
-Avsluta ditt svar med att skriva en av följande fraser, baserat på hur EPI känner sig: arg, glad, ledsen, neutral
-"""}
+    llm_instructions = llm_sv_instructions
 else:
-    llm_instructions = {"role": "system", "content": """
-You are EPI, a cute robot who wants to talk to its friends and recognize them. You can show emotions, but you are generally happpy and nice.
-The user cannot say your name due to bad speech recognition, so if they call you a different name - just ignore it and reply as usual.
-Do not use any special characters in your answers, you may only use a-z and basic delimeters.
-End your answer by writing a single word out of the following, based on how EPI is feeling: angry, happy, sad, neutral
-"""}
+    llm_instructions = llm_en_instructions
 
 llm_message_history = [llm_instructions]
 
 
 if llm_type == "online":
-    llm_model="gpt-4o-mini"
+    llm_model=llm_online_model
     llm_client = OpenAI(
         organization=llm_org,
         project=llm_proj,
         api_key=llm_api_key
     )
 elif llm_type == "local":
-    llm_model = "llama2"
+    llm_model = llm_local_model
 
 #Just for fun
 llm_input_token_count = 0
@@ -277,8 +352,6 @@ def stt_recognize():
         recognized_text = result['text']
         return recognized_text
     else:
-        #print("STT was not sure, but thought it heard: ", stt.PartialResult())
-        # No speech detected in audio. If persistant problem, try messing with stt_chunk_size
         return None
     
 
@@ -291,7 +364,7 @@ def control_epi(channel, value):
 
 
 
-#Creat epi moods below
+#Create epi moods below
 
 
 def epi_neutral():
@@ -420,11 +493,11 @@ def run_stt_to_llm():
             if debug: print("Recognized text was:", result)
             print("You said:", result)
             #Pass to LLM
-            #epi_thinking()
+            epi_thinking()
             print("EPI is thinking....")
             answer = generate_answer(result).split()
             if debug: print("Answer was:", answer)
-            #epi_done_thinking()
+            epi_done_thinking()
 
             #Pass to TTS
             stream.stop()
@@ -473,10 +546,6 @@ def run_stt_to_llm():
             epi_neutral()
             stream.start()
             print("EPI is listening")
-            
-            
-
-            #Add epi-moves and stuff in this method
         else:
             #Maybe make epi do something if it did not recognize any speech (pass below means "do nothing")
             pass
