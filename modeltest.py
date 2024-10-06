@@ -220,7 +220,7 @@ if tts_voice is None:
     exit(1)
 
 tts_engine.setProperty('voice', tts_voice if tts_voice else tts_voices[0].id) 
-print(tts_engine.proxy._driver._tts._pitchBase)
+print(tts_engine.proxy._driver._tts._pitchBase())
 tts_engine.proxy._driver._tts._setPitchBase_(400)
 
 
@@ -308,12 +308,12 @@ if llm_type == "online":
     )
 elif llm_type == "local":
     llm_model = llm_local_model
-    llm_server = subprocess.Popen(llm_local_command.split(" "), env=llm_local_env, stdout=subprocess.PIPE)
+    llm_server = subprocess.Popen(llm_local_command.split(" "), env=llm_local_env, stderr=subprocess.PIPE)
     llm_started = False
     while not llm_started:
         print("Local LLM not yet started...")
         if llm_started:
-            llm_started = "Listening on" in llm_server.stdout.readline().decode("utf-8")
+            llm_started = "Listening on" in llm_server.stderr.readline().decode("utf-8")
         time.sleep(1)
 
     llm_client = ollama.Client(host="http://127.0.0.1:" + str(llm_local_port))
