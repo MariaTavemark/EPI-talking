@@ -539,7 +539,7 @@ def run_stt_to_llm():
 
     stream.start()
     print("Saying hej!")
-    tts_engine.say("Hej!")
+    tts_engine.say("Hej, vad heter du??")
     tts_thread.start()
     while tts_thread.is_alive():
         time.sleep(0.1)
@@ -550,6 +550,7 @@ def run_stt_to_llm():
     loop.create_task(checkKeypress())
     print("Created task")
     loop_thread = threading.Thread(target=loop.run_forever())
+    print("Test")
     loop_thread.start()
     
     print("EPI is listening")
