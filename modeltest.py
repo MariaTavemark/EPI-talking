@@ -337,7 +337,9 @@ def generate_answer(prompt):
     
         return reply
     else:
-        response = ollama.chat(model=llm_model, messages=llm_message_history)
+        response = ollama.chat(model=llm_model, 
+                               temperature=llm_temperature, 
+                               messages=llm_message_history)
         return response['message']['content']
 
 
