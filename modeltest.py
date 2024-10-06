@@ -312,8 +312,8 @@ elif llm_type == "local":
     llm_started = False
     while not llm_started:
         print("Local LLM not yet started...")
-        print(llm_started)
-        if llm_started:
+        print(llm_server)
+        if llm_server:
             row = llm_server.stderr.readline()
             llm_started = "Listening on" in row.decode("utf-8")
             print("OLLAMA said: " + row)
