@@ -307,7 +307,7 @@ if llm_type == "online":
     )
 elif llm_type == "local":
     llm_model = llm_local_model
-    llm_server = subprocess.Popen(llm_local_command.split(" "), env=llm_local_env, stderr=subprocess.PIPE)
+    llm_server = subprocess.Popen(llm_local_command.split(" "), env=llm_local_env, stderr=subprocess.PIPE, stdout=subprocess.DEVNULL)
     llm_started = False
     while not llm_started:
         print("Local LLM not yet started...")
@@ -496,6 +496,7 @@ def epi_nod():
 def epi_thinking():
     control_epi("left_pupil", 50)
     control_epi("right_pupil", 50)
+    time.sleep(0.5)
 
 
 def epi_done_thinking():
