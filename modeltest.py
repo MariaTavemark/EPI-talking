@@ -532,21 +532,21 @@ def run_stt_to_llm():
     print("EPI is saying yes")
     epi_nod()
 
-    tts_thread:threading.Thread = newTTSthread()
-
     stream.start()
     print("Saying hej!")
-    tts_engine.say("Hej, vad heter du??")
+    tts_engine.say("Hej!")
+    tts_thread:threading.Thread = newTTSthread()
     tts_thread.start()
+
     while tts_thread.is_alive():
         time.sleep(0.1)
-        print("Hej-loop")
     
     print("EPI is listening")
     print("To make EPI pause (and not listen), press 'p'")
     print("Press 'r' to reset the conversation with EPI")
 
     while True:
+        checkKeypress()
         if epi_paused:
             time.sleep(0.2)
             continue
