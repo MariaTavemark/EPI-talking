@@ -495,14 +495,14 @@ def epi_nod():
 
 
 def epi_thinking():
-    control_epi("left_pupil", 50)
-    control_epi("right_pupil", 50)
-    time.sleep(0.5)
+    control_epi("left_pupil", 0)
+    control_epi("right_pupil", 0)
+    time.sleep(0.1)
 
 
 def epi_done_thinking():
-    control_epi("left_pupil", 20)
-    control_epi("right_pupil", 20)
+    control_epi("left_pupil", 50)
+    control_epi("right_pupil", 50)
 
 
 def newTTSthread():
