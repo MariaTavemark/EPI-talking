@@ -398,7 +398,7 @@ def start_ikaros():
         elif ikaros_server:
             row =  ikaros_server.stdout.readline().decode("utf-8")
             print("Ikaros said: " + row)
-            started_string = "Power off servos."
+            started_string = "IKAROS: 1 WARNING."
             if started_string in row:
                 print("Ikaros has started, waiting for motors to power on..")
                 time.sleep(5)
