@@ -196,8 +196,6 @@ else:
     lang_codes = en_lang_codes
 
 tts_engine = pyttsx3.init()
-print(tts_engine.getProperty('pitch'))
-print(tts_engine.proxy._driver._tts._pitchBase)
 if debug:
     tts_rate = tts_engine.getProperty('rate') 
     print("Default speaking rate is:", tts_rate)
@@ -222,7 +220,8 @@ if tts_voice is None:
     exit(1)
 
 tts_engine.setProperty('voice', tts_voice if tts_voice else tts_voices[0].id) 
-
+print(tts_engine.proxy._driver._tts._pitchBase)
+tts_engine.proxy._driver._tts._setPitchBase_(400)
 
 
 #Initialize STT variables
