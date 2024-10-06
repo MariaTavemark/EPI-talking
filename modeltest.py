@@ -396,7 +396,6 @@ def start_ikaros():
                 print("Ikaros said: " + row.decode("utf-8"))
             ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         elif ikaros_server:
-            print("Reading row")
             row =  ikaros_server.stdout.readline().decode("utf-8")
             print("Ikaros said: " + row)
             started_string = "IKAROS: 1 WARNING."
@@ -749,8 +748,13 @@ if __name__ == "__main__":
             print("Total cost was:", input_cost + output_cost, "kr")
         else:
             llm_server.kill()
-            ikaros_server.kill()
+            time.sleep(1)
+            llm_server.terminate()
             print("Goodbye!")
+        ikaros_server.kill()
+        time.sleep(1)
+        ikaros_server.terminate()
+            
         exit(0)
 
 
