@@ -220,9 +220,9 @@ if tts_voice is None:
     exit(1)
 
 tts_engine.setProperty('voice', tts_voice if tts_voice else tts_voices[0].id) 
-print(tts_engine.proxy._driver._tts._pitchBase())
+print("Pitch_base before: " + str(tts_engine.proxy._driver._tts._pitchBase()))
 tts_engine.proxy._driver._tts._setPitchBase_(400)
-
+print("Pitch_base after: " + str(tts_engine.proxy._driver._tts._pitchBase()))
 
 #Initialize STT variables
 stt_queue = queue.Queue()
@@ -313,7 +313,9 @@ elif llm_type == "local":
     while not llm_started:
         print("Local LLM not yet started...")
         if llm_started:
-            llm_started = "Listening on" in llm_server.stderr.readline().decode("utf-8")
+            row = llm_server.stderr.readline().decode("utf-8")
+            llm_started = "Listening on" in row
+            print("OLLAMA said: " + row)
         time.sleep(1)
 
     llm_client = ollama.Client(host="http://127.0.0.1:" + str(llm_local_port))
