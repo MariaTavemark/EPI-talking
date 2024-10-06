@@ -314,8 +314,8 @@ elif llm_type == "local":
         print("Local LLM not yet started...")
         print(llm_server)
         if llm_server:
-            row = llm_server.stderr.readline()
-            llm_started = "Listening on" in row.decode("utf-8")
+            row = llm_server.stderr.readline().decode("utf-8")
+            llm_started = "Listening on" in row
             print("OLLAMA said: " + row)
         time.sleep(1)
 
