@@ -541,8 +541,7 @@ def run_stt_to_llm():
     time.sleep(1)
     print("EPI is saying yes")
     epi_nod()
-
-    stream.start()
+    
     print("Saying hej!")
     tts_engine.say("Hej!")
     tts_thread:threading.Thread = newTTSthread()
@@ -551,6 +550,7 @@ def run_stt_to_llm():
     while tts_thread.is_alive():
         time.sleep(0.1)
     
+    stream.start()
     print("EPI is listening")
     print("To make EPI pause (and not listen), press 'p'")
     print("Press 'r' to reset the conversation with EPI")
@@ -602,9 +602,9 @@ def run_stt_to_llm():
             no_codes = ["nej,", "nej", "nej.", "nej!", "nej?", "no,", "no", "no.", "no!", "no?"]
             yes_codes = ["ja,", "ja", "ja.", "ja!", "ja?", "yes,", "yes", "yes.", "yes!", "yes?"]
             if any([True for x in answer[:-1] if x.lower() in no_codes]):
-                epi_shake_head()
+                threading.Thread(target=epi_shake_head()).start()
             elif any([True for x in answer[:-1] if x.lower() in yes_codes]):
-                epi_nod()
+                threading.Thread(target=epi_nod()).start()
 
             tts_engine.say(" ".join(answer[:-1]))
             tts_thread = newTTSthread()
