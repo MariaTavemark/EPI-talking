@@ -29,7 +29,7 @@ llm_online_model = "gpt-4o-mini"
 llm_online_default_keyfile = "/Volumes/MARIAT/openai.txt"
 
 #Which LLM should we use in local-mode?
-llm_local_model = "llama3.2:1b"
+llm_local_model = "llama3.2:3b"
 
 #How random the answers should be [0.0-2.0]
 llm_temperature = 0.8
