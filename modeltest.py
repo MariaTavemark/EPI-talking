@@ -738,18 +738,11 @@ if __name__ == "__main__":
             print("The cost for these is", input_cost, "kr and", output_cost, "kr respectively")
             print("Total cost was:", input_cost + output_cost, "kr")
         else:
-            llm_server.terminate()
-            ikaros_server.terminate()
+            llm_server.kill()
+            ikaros_server.kill()
             print("Goodbye!")
         exit(0)
 
-#first run DYLD_LIBRARY_PATH=/usr/local/lib /Users/epi/Code/ikaros/Bin/ikaros /Users/epi/epi-talking/Epi/ExperimentSetup.ikg -t -r25 EpiName=EpiWhite
-# then wait until EPI says "Hello"
-#then run with "python3 modeltest.py"
-
-
-#Om ikaros kraschar så öka -r25 till -r250 ovan
-#
 
 #Problem: 
 
