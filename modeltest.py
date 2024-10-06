@@ -31,6 +31,12 @@ llm_online_default_keyfile = "/Volumes/MARIAT/openai.txt"
 #Which LLM should we use in local-mode?
 llm_local_model = "llama3.2:3b"
 
+#On which port should the local LLM listen?
+llm_local_port = 8888
+
+#How do you run the local llm?
+llm_local_command = 'OLLAMA_HOST="127.0.0.1:' + str(llm_local_port) + '" ollama serve'
+
 #How random the answers should be [0.0-2.0]
 llm_temperature = 0.8
 
@@ -109,8 +115,10 @@ epi_control_path = "/control/SR.positions/"
 #                                   #
 #####################################
 
-
-
+#Global
+import asyncio
+import sys
+import select
 
 #LLM key file choosing
 from random import random
@@ -126,6 +134,7 @@ import openai
 
 # Local LLM:
 import ollama
+import subprocess
 
 
 #STT:
@@ -141,7 +150,10 @@ import threading
 #EPI:
 import requests
 
-#LLM key file config
+#Initialize global variables
+epi_paused = False
+
+#LLM key file setup
 if llm_type == "online":
     try:
         if not os.path.isfile(llm_online_default_keyfile):
@@ -217,7 +229,8 @@ stt = vosk.KaldiRecognizer(stt_model, stt_sample_rate)
 def stt_audio_add(indata, frames, time, status):
     if status:
         print("STT capture had status: ", status)
-    stt_queue.put(bytes(indata))
+    if not epi_paused:
+        stt_queue.put(bytes(indata))
 
 stream = sounddevice.RawInputStream(samplerate=stt_sample_rate, blocksize = stt_chunk_size, device=stt_device['index'],
             dtype="int16", channels=1, callback=stt_audio_add)
@@ -282,6 +295,15 @@ if llm_type == "online":
     )
 elif llm_type == "local":
     llm_model = llm_local_model
+    llm_server = subprocess.Popen(llm_local_command.split(" "))
+    llm_started = False
+    while not llm_started:
+        print("Local LLM not yet started...")
+        llm_started = "Listening on" in llm_server.stdout.readline().decode("utf-8")
+        time.sleep(1)
+
+    llm_client = ollama.Client(host="http://127.0.0.1:" + str(llm_local_port))
+
 
 #Just for fun
 llm_input_token_count = 0
@@ -337,7 +359,7 @@ def generate_answer(prompt):
     
         return reply
     else:
-        response = ollama.chat(model=llm_model, 
+        response = llm_client.chat(model=llm_model, 
                                options={
                                   "temperature": llm_temperature
                                },
@@ -425,7 +447,7 @@ def epi_shake_head():
     delay = 0.03 #About 30 Hz
 
     for i in range(num_shakes):
-        for j in range(-degrees, degrees):
+        for j in range(-degrees, degrees, 2):
             control_epi("neck_pan", j)
             time.sleep(delay)
 
@@ -438,7 +460,7 @@ def epi_nod():
     delay = 0.03 # About 30 Hz
 
     for i in range(num_shakes):
-        for j in range(min_degrees, max_degrees):
+        for j in range(min_degrees, max_degrees, 2):
             control_epi("neck_tilt", j)
             time.sleep(delay)
 
@@ -457,6 +479,23 @@ def epi_done_thinking():
 
 def newTTSthread():
     return threading.Thread(target=tts_engine.runAndWait())
+
+
+# Method to check if we should pause EPI
+async def checkKeypress():
+    global epi_paused
+    global llm_message_history
+
+    while True:
+        await asyncio.sleep(0.1)
+        while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
+            ch = sys.stdin.read(1)
+            if ch == 'p':
+                epi_paused = not epi_paused
+                print("EPI is now " + ("" if not epi_paused else "not ") + "listening. Press 'p' to make EPI " + ("" if epi_paused else "not ") + "listen")
+            elif ch == 'r':
+                llm_message_history = [llm_instructions]
+                print("Chat history cleared, the conversation with EPI has now started over.")
 
 
 def run_stt_to_llm():
@@ -487,10 +526,18 @@ def run_stt_to_llm():
     while tts_thread.is_alive():
         time.sleep(0.1)
 
+    loop = asyncio.get_event_loop()
+    loop.create_task(checkKeypress())
+    loop.run_forever()
+    
     print("EPI is listening")
-
+    print("To make EPI pause (and not listen), press 'p'")
+    print("Press 'r' to reset the conversation with EPI")
 
     while True:
+        if epi_paused:
+            time.sleep(0.2)
+            continue
         result = stt_recognize()
         #Test if we recognized any speech
         if result:
@@ -582,6 +629,7 @@ if __name__ == "__main__":
             print("The cost for these is", input_cost, "kr and", output_cost, "kr respectively")
             print("Total cost was:", input_cost + output_cost, "kr")
         else:
+            llm_server.kill()
             print("Goodbye!")
         exit(0)
 
