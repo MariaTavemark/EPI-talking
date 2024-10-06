@@ -40,10 +40,14 @@ llm_local_command = "ollama serve"
 #Where is ollama?
 llm_local_bin = "/usr/local/bin/"
 
+#Where is our home?
+llm_local_home = "/Users/epi"
+
 #What should the local llm environment variables be?
 llm_local_env = {
     'OLLAMA_HOST': "127.0.0.1:" + str(llm_local_port),
-    "PATH": llm_local_bin
+    "PATH": llm_local_bin,
+    "HOME": llm_local_home
                  }
 
 #How random the answers should be [0.0-2.0]
