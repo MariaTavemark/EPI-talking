@@ -575,11 +575,14 @@ if __name__ == "__main__":
         print("An error occured during the conversation with EPI:", err)
         print(err.__cause__)
     finally:
-        print("This session had", llm_input_token_count, "input tokens and", llm_output_token_count, "output tokens")
-        input_cost = llm_input_token_count * llm_input_token_cost[llm_model]
-        output_cost = llm_output_token_count * llm_output_token_cost[llm_model]
-        print("The cost for these is", input_cost, "kr and", output_cost, "kr respectively")
-        print("Total cost was:", input_cost + output_cost, "kr")
+        if llm_type == "online":
+            print("This session had", llm_input_token_count, "input tokens and", llm_output_token_count, "output tokens")
+            input_cost = llm_input_token_count * llm_input_token_cost[llm_model]
+            output_cost = llm_output_token_count * llm_output_token_cost[llm_model]
+            print("The cost for these is", input_cost, "kr and", output_cost, "kr respectively")
+            print("Total cost was:", input_cost + output_cost, "kr")
+        else:
+            print("Goodbye!")
         exit(0)
 
 #first run DYLD_LIBRARY_PATH=/usr/local/lib /Users/epi/Code/ikaros/Bin/ikaros /Users/epi/epi-talking/Epi/ExperimentSetup.ikg -t -r25 EpiName=EpiWhite
