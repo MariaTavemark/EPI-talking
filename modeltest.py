@@ -396,6 +396,7 @@ def start_ikaros():
                 print("Ikaros said: " + row.decode("utf-8"))
             ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.STDOUT, stdout=subprocess.PIPE)
         elif ikaros_server:
+            print("Reading row")
             row =  ikaros_server.stdout.readline().decode("utf-8")
             print("Ikaros said: " + row)
             started_string = "IKAROS: 1 WARNING."
