@@ -538,13 +538,17 @@ def run_stt_to_llm():
     tts_thread:threading.Thread = newTTSthread()
 
     stream.start()
+    print("Saying hej!")
     tts_engine.say("Hej!")
     tts_thread.start()
     while tts_thread.is_alive():
         time.sleep(0.1)
+        print("Hej-loop")
 
     loop = asyncio.new_event_loop()
+    print("Created loop")
     loop.create_task(checkKeypress())
+    print("Created task")
     loop_thread = threading.Thread(target=loop.run_forever())
     loop_thread.start()
     
