@@ -124,10 +124,10 @@ nrServosTotal = "19"
 	<!-- This line imports a seperate ikc file with all the LED connections. -->
 	<module class = "EpiLed" name = "LED" />
 
-	<!-- Speeking
+	<!-- Speeking--> 
 	<module class =	"FunctionGenerator" name =	"Speek" type =	"sin" frequency =	"10"
 		offset      =	"0.5" amplitude =	"0" shift =	"0.1" />
-	<connection source = "Speek.OUTPUT"  target = "LED.SPEEKING" />--> 
+	<connection source = "Speek.OUTPUT"  target = "LED.SPEEKING" />
 
 
 
