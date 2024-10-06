@@ -543,10 +543,11 @@ def run_stt_to_llm():
     while tts_thread.is_alive():
         time.sleep(0.1)
 
-    loop = asyncio.get_event_loop()
+    loop = asyncio.new_event_loop()
     loop.create_task(checkKeypress())
-    loop.run_forever()
-
+    loop_thread = threading.Thread(target=loop.run_forever())
+    loop_thread.start()
+    
     print("EPI is listening")
     print("To make EPI pause (and not listen), press 'p'")
     print("Press 'r' to reset the conversation with EPI")
