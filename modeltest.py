@@ -21,6 +21,7 @@ language = "sv"
 #           LLM config              #
 #                                   #
 #####################################
+
 #LLM "local" or "online"
 llm_type = "local"
 
@@ -121,6 +122,29 @@ epi_url = "http://127.0.0.1:8000"
 #What is the URL to control EPI?
 epi_control_path = "/control/SR.positions/"
 
+#Which EPI do we have?
+epi_type = "EpiWhite"
+
+
+#####################################
+#                                   #
+#          Ikaros config            #
+#                                   #
+#####################################
+
+#Where can we find IKAROS?
+ikaros_binary = "/Users/epi/Code/ikaros/Bin/ikaros"
+
+#Which ikaros file should we run?
+ikaros_file = "Epi/ExperimentSetup.ikg"
+
+#What environment variables should ikaros have?
+ikaros_env = {
+    "DYLD_LIBRARY_PATH": "/usr/local/lib/"
+}
+
+#What is the command to run ikaros?
+ikaros_command = ikaros_binary + " " + ikaros_file + " -t -r EpiName=" + epi_type
 
 
 #####################################
@@ -164,9 +188,11 @@ import threading
 #EPI:
 import requests
 
+#############################################################################################################################
 #Initialize global variables
 epi_paused = False
 
+#############################################################################################################################
 #LLM key file setup
 if llm_type == "online":
     try:
@@ -183,6 +209,7 @@ if llm_type == "online":
         exit(1)
 
 
+#############################################################################################################################
 #Initialize TTS variables
 sv_lang_codes = ["sv", "sv_SE"]
 en_lang_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
@@ -229,6 +256,7 @@ if debug:
     print("Pitch_base after: " + str(tts_engine.proxy._driver._tts._pitchBase()))
 
 
+#############################################################################################################################
 #Initialize STT variables
 stt_queue = queue.Queue()
 
@@ -255,7 +283,7 @@ stream = sounddevice.RawInputStream(samplerate=stt_sample_rate, blocksize = stt_
 
 
 
-
+#############################################################################################################################
 # Initialize EPI-head variable
 epi_channels = {
     "neck_tilt": 0,
@@ -294,7 +322,7 @@ epi_valid_ranges = {
 }
 
 
-
+#############################################################################################################################
 # Initialize LLM Variables
 if language == "sv":
     llm_instructions = llm_sv_instructions
@@ -355,6 +383,39 @@ llm_output_token_cost = {
     "o1-preview-2024-09-12": 0.000618,
 }
 
+#############################################################################################################################
+# Start ikaros
+def start_ikaros():
+    ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    ikaros_started = False
+    while not ikaros_started:
+        print("Ikaros has not yet started...")
+        if ikaros_server and ikaros_server.poll() is not None:
+            print("Ikaros has crashed...")
+            for row in ikaros_server.stdout.readlines():
+                print("Ikaros said: " + row.decode("utf-8"))
+            for row in ikaros_server.stderr.readlines():
+                print("Ikaros said: " + row.decode("utf-8"))
+            ikaros_server = subprocess.Popen(ikaros_command.split(" "), env=ikaros_env, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        elif ikaros_server:
+            row =  ikaros_server.stdout.readline().decode("utf-8")
+            errow = ikaros_server.stderr.readline().decode("utf-8")
+            print("Ikaros said: " + row)
+            print("Ikaros said: " + errow)
+            started_string = "Power off servos."
+            if started_string in row or started_string in errow:
+                print("Ikaros has started, waiting for motors to power on..")
+                time.sleep(5)
+                ikaros_started = True
+        time.sleep(0.2)
+    return ikaros_server
+
+ikaros_server = start_ikaros()
+
+
+#############################################################################################################################
+# Main code below 
+
 #Metod som ger svar baserat på en prompt/fråga
 def generate_answer(prompt):
     global llm_input_token_count
@@ -404,11 +465,18 @@ def stt_recognize():
     
 
 def control_epi(channel, value):
+    global ikaros_server
     if channel not in epi_channels:
         raise ValueError("Invalid EPI channel sent:", channel)
     valid_values = epi_valid_ranges[channel]
     if valid_values[0] <= value <= valid_values[1]:
-         requests.get(epi_url + epi_control_path + str(epi_channels[channel]) + "/0/" + str(value), timeout=0.1)
+        try:
+            requests.get(epi_url + epi_control_path + str(epi_channels[channel]) + "/0/" + str(value), timeout=0.1)
+        except Exception as err:
+            print("An error occurred when communicating with EPI. Assuming that Ikaros is unresponsive..")
+            print("Restarting ikaros... Please wait...")
+            ikaros_server = start_ikaros()
+            requests.get(epi_url + epi_control_path + str(epi_channels[channel]) + "/0/" + str(value), timeout=0.1)
 
 
 
@@ -517,6 +585,7 @@ def newTTSthread():
 # Method to check if we should pause EPI
 def checkKeypress():
     global epi_paused
+    global ikaros_server
     global llm_message_history
     while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
         ch = sys.stdin.read(1)
@@ -526,9 +595,16 @@ def checkKeypress():
         elif ch == 'r':
             llm_message_history = [llm_instructions]
             print("Chat history cleared, the conversation with EPI has now started over.")
+        elif ch == 'i':
+            print("Restarting ikaros. Please wait!")
+            ikaros_server.terminate()
+            ikaros_server = start_ikaros()
 
 
 def run_stt_to_llm():
+    global ikaros_server
+    global epi_paused
+
     print("System ready")
     print("EPI is angry")
     epi_angry()
@@ -560,9 +636,17 @@ def run_stt_to_llm():
     print("EPI is listening")
     print("To make EPI pause (and not listen), press 'p'")
     print("Press 'r' to reset the conversation with EPI")
+    print("If EPI is not moving/changing colors, press 'i' to restart Ikaros")
 
     while True:
         checkKeypress()
+
+        if ikaros_server.poll() is not None:
+            print("Ikaros server has crashed... Trying to restart!")
+            epi_paused = True
+            ikaros_server = start_ikaros()
+            epi_paused = False
+
         if epi_paused:
             time.sleep(0.2)
             continue
@@ -658,7 +742,8 @@ if __name__ == "__main__":
             print("The cost for these is", input_cost, "kr and", output_cost, "kr respectively")
             print("Total cost was:", input_cost + output_cost, "kr")
         else:
-            llm_server.kill()
+            llm_server.terminate()
+            ikaros_server.terminate()
             print("Goodbye!")
         exit(0)
 
