@@ -1,6 +1,6 @@
 #/Users/epi/miniforge3/bin/python3
 
-voice_type = "pyttsx3"
+voice_type = "avs"
 tts_rate_desired = 130
 if voice_type == "pyttsx3":
     import pyttsx3
@@ -54,7 +54,7 @@ if voice_type == "pyttsx3":
         engine.runAndWait()
 
 else:
-    from .av_speech import AVSpeechSynthesizer, AVSpeechSynthesisVoice, AVSpeechSynthesisVoiceGender, AVSpeech, AVSpeechSynthesisVoiceQuality, AVSpeechUtterance
+    from av_speech import AVSpeechSynthesizer, AVSpeechSynthesisVoice, AVSpeechSynthesisVoiceGender, AVSpeech, AVSpeechSynthesisVoiceQuality, AVSpeechUtterance
     tts_engine = AVSpeechSynthesizer()
     voices = AVSpeechSynthesisVoice.get_speech_voices()
 
