@@ -4,7 +4,7 @@ from objc_util import ObjCClass, ObjCInstance
 
 from .av_speech_synthesis_voice_quality import AVSpeechSynthesisVoiceQuality
 from .av_speech_synthesis_voice_gender import AVSpeechSynthesisVoiceGender
-from ._utils import ns_string_to_py_string
+from .utils import ns_string_to_py_string
 
 __all__ = ["AVSpeechSynthesisVoice"]
 
