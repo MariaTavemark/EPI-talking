@@ -1,5 +1,5 @@
 # Collection of low level converters to/from objective C
-from objc_util import ObjCInstance
+from .objc_util import ObjCInstance
 
 __all__ = ["ns_string_to_py_string"]
 

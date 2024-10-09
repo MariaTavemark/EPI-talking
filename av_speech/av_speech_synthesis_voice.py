@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from objc_util import ObjCClass, ObjCInstance
+from .objc_util import ObjCClass, ObjCInstance
 
 from .av_speech_synthesis_voice_quality import AVSpeechSynthesisVoiceQuality
 from .av_speech_synthesis_voice_gender import AVSpeechSynthesisVoiceGender

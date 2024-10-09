@@ -1,4 +1,4 @@
-from objc_util import ObjCClass, ObjCInstance
+from .objc_util import ObjCClass, ObjCInstance
 
 from .av_speech_utterance import AVSpeechUtterance
 
