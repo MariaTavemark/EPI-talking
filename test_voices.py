@@ -1,50 +1,68 @@
 #/Users/epi/miniforge3/bin/python3
-import pyttsx3
 
+voice_type = "pyttsx3"
 tts_rate_desired = 130
+if voice_type == "pyttsx3":
+    import pyttsx3
 
-engine = pyttsx3.init()
+    
 
-voices = engine.getProperty('voices')
+    engine = pyttsx3.init()
 
-#for voice in voices:
-#    print(voice)
-#    print()
+    voices = engine.getProperty('voices')
 
-#for voice in filter(lambda x: any([True for a in x.languages if "sv" in a]), voices):
-#    print(voice)
-#    print()
+    #for voice in voices:
+    #    print(voice)
+    #    print()
 
-#exit(0)
+    #for voice in filter(lambda x: any([True for a in x.languages if "sv" in a]), voices):
+    #    print(voice)
+    #    print()
 
-
-print("Swedish voices")
-
-sv_voices = list(filter(lambda x: "sv" in x.languages or "sv_SE" in x.languages, voices))
-for voice in sv_voices:
-    print(voice)
-    print()
-
-print("Trying Swedish voices, with no age")
-
-for id, voice in enumerate(sv_voices):
-    print("Voice is now ", '"' + voice.name + '"', "and voice", voice)
-    engine.setProperty('voice', voice.id) 
-    engine.setProperty('rate', tts_rate_desired) 
-    engine.say("Hej! Jag heter EPI och är en liten söt robot som testar sin röst för att se vilken som passar mig bäst!")
-    engine.runAndWait()
+    #exit(0)
 
 
-print("English voices:")
-en_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
-en_voices = list(filter(lambda x: any([True for c in en_codes if c in x.languages]), voices))
+    print("Swedish voices")
+
+    sv_voices = list(filter(lambda x: "sv" in x.languages or "sv_SE" in x.languages, voices))
+    for voice in sv_voices:
+        print(voice)
+        print()
+
+    print("Trying Swedish voices, with no age")
+
+    for id, voice in enumerate(sv_voices):
+        print("Voice is now ", '"' + voice.name + '"', "and voice", voice)
+        engine.setProperty('voice', voice.id) 
+        engine.setProperty('rate', tts_rate_desired) 
+        engine.say("Hej! Jag heter EPI och är en liten söt robot som testar sin röst för att se vilken som passar mig bäst!")
+        engine.runAndWait()
 
 
-print("Trying English voices, with no age")
+    print("English voices:")
+    en_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
+    en_voices = list(filter(lambda x: any([True for c in en_codes if c in x.languages]), voices))
 
-for id, voice in enumerate(en_voices):
-    print("Voice is now ", '"' + voice.name + '"', "and voice", voice)
-    engine.setProperty('voice', voice.id) 
-    engine.setProperty('rate', tts_rate_desired) 
-    engine.say("Hello! My name is EPI and I am a cute little robot who is testing its voice to see which one suits me the best")
-    engine.runAndWait()
+
+    print("Trying English voices, with no age")
+
+    for id, voice in enumerate(en_voices):
+        print("Voice is now ", '"' + voice.name + '"', "and voice", voice)
+        engine.setProperty('voice', voice.id) 
+        engine.setProperty('rate', tts_rate_desired) 
+        engine.say("Hello! My name is EPI and I am a cute little robot who is testing its voice to see which one suits me the best")
+        engine.runAndWait()
+
+else:
+    from .av_speech import AVSpeechSynthesizer, AVSpeechSynthesisVoice, AVSpeechSynthesisVoiceGender, AVSpeech, AVSpeechSynthesisVoiceQuality, AVSpeechUtterance
+    tts_engine = AVSpeechSynthesizer()
+    voices = AVSpeechSynthesisVoice.get_speech_voices()
+
+    sentence_sv = AVSpeechUtterance("Hej! Jag heter EPI och är en liten söt robot som testar sin röst för att se vilken som passar mig bäst!", rate=tts_rate_desired)
+    sentence_sv_pitch = AVSpeechUtterance("Hej! Jag heter EPI och är en liten söt robot som testar sin röst för att se vilken som passar mig bäst!", rate=tts_rate_desired, pitch_multiplier=1.8)
+
+    for v in voices:
+        print(v)
+        sentence_sv.voice = v
+        tts_engine.speak_utterance(sentence_sv)
+        tts_engine.speak_utterance(sentence_sv_pitch)
