@@ -3,7 +3,7 @@
 voice_type = "avs"
 tts_rate_desired_pyttsx3 = 130
 tts_rate_desired_avspeech = 0.5
-tts_rate_desired_avspeech_pitch = 0.8
+tts_rate_desired_avspeech_pitch = 0.55
 en_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
 
 def createTTS():
