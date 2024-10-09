@@ -4,7 +4,7 @@
 from random import random
 import sys
 import select
-import configparser
+from configobj import ConfigObj
 import time
 
 from .tts import TTS
@@ -13,8 +13,7 @@ from .stt import STT
 from .epi import EPI
 
 # Read our config from config.ini
-config = configparser.ConfigParser()
-config.read_file("config.ini")
+config = ConfigObj("config.ini")
 
 tts = TTS(config)
 llm = LLM(config)
