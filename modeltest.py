@@ -451,6 +451,8 @@ def generate_answer(prompt):
                                   "temperature": llm_temperature
                                },
                                messages=llm_message_history)
+        
+        llm_message_history.append({"role": response["message"]["role"], "content": response["message"]["content"]})
         return response['message']['content']
 
 
