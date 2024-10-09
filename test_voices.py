@@ -83,7 +83,7 @@ if voice_type == "pyttsx3":
     for id, voice in enumerate(en_voices):
         print("Voice is now ", '"' + voice.name + '"', "and voice", voice)
         engine.setProperty('voice', voice.id) 
-        engine.setProperty('rate', tts_rate_desired) 
+        engine.setProperty('rate', tts_rate_desired_pyttsx3) 
         engine.say("Hello! My name is EPI and I am a cute little robot who is testing its voice to see which one suits me the best")
         engine.runAndWait()
 
@@ -99,6 +99,7 @@ else:
 
     for v in sv_voices:
         print(v)
+        print(v.identifier())
         tts_engine = createTTS()
         sentence_sv, sentence_sv_pitch = createSv()
         sentence_sv.setVoice_(v)
@@ -114,6 +115,7 @@ else:
 
     for v in en_voices:
         print(v)
+        print(v.identifier())
         tts_engine = createTTS()
         sentence_en, sentence_en_pitch = createEn()
         sentence_en.setVoice_(v)
