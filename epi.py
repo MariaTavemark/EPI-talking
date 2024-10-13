@@ -165,9 +165,9 @@ class EPI:
     
 
     def shutdown(self):
-        self.server.kill()
-        time.sleep(1)
         self.server.terminate()
+        time.sleep(5)
+        self.server.kill()
 
 
     def terminateIkaros(self):

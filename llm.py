@@ -177,9 +177,9 @@ class LLM:
             print("The cost for these is", cost["input"], "kr and", cost["output"], "kr respectively")
             print("Total cost was:", cost["total"], "kr")
         else:
-            self.server.kill()
-            time.sleep(1)
             self.server.terminate()
+            time.sleep(2)
+            self.server.kill()
         
     
     def clearHistory(self):
