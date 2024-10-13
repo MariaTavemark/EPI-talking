@@ -46,6 +46,7 @@ def run_stt_to_llm():
 
     epi._nod_()
     epi._shakeHead_()
+    epi.setMood("neutral")
     
     print("Saying hej!")
     tts.say("Hej!")
@@ -90,8 +91,13 @@ def run_stt_to_llm():
             stt.pause()
 
             print("EPI is talking")
-            print("EPI said: ", " ".join(answer[:-1]))
-            mood = answer[-1:][0]
+            if llm.llm_type == "local":
+                print("EPI said: ", " ".join(answer))
+                mood = "neutral"
+            else:
+                print("EPI said: ", " ".join(answer[:-1]))
+                mood = answer[-1:][0]
+                answer = answer[:-1]
 
             happy_moods = ["glad", "happy"]
             angry_moods = ["arg", "angry"]
@@ -114,16 +120,16 @@ def run_stt_to_llm():
 
             no_codes = ["nej,", "nej", "nej.", "nej!", "nej?", "no,", "no", "no.", "no!", "no?"]
             yes_codes = ["ja,", "ja", "ja.", "ja!", "ja?", "yes,", "yes", "yes.", "yes!", "yes?"]
-            if any([True for x in answer[:-1] if x.lower() in no_codes]):
+            if any([True for x in answer if x.lower() in no_codes]):
                 epi.shakeHead()
-            elif any([True for x in answer[:-1] if x.lower() in yes_codes]):
+            elif any([True for x in answer if x.lower() in yes_codes]):
                 epi.nod()
 
-            tts.say(" ".join(answer[:-1]))
+            tts.say(" ".join(answer))
 
             #print("EPI is talking and flashing")
             while tts.isTalking():
-                intensity = int(random() * 50)
+                intensity = int(random() * 30)
                 #print("Random mouth intensity: ", intensity)
                 epi.controlEpi("mouth_intensity", intensity)
                 time.sleep(0.2)

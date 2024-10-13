@@ -48,14 +48,14 @@ class EPI:
 
     moods = {
         "neutral": {
-            "mouth_intensity": 30,
+            "mouth_intensity": 50,
             "mouth_r": 50,
             "mouth_g": 50,
             "mouth_b": 0,
             "eyes_r": 50,
             "eyes_g": 50,
             "eyes_b": 0,
-            "eyes_intensity": 40,
+            "eyes_intensity": 70,
             "left_pupil": 20,
             "right_pupil": 20,
         },
@@ -72,14 +72,14 @@ class EPI:
             "right_pupil": 90,
         },
         "happy": {
-            "mouth_intensity": 50,
+            "mouth_intensity": 60,
             "mouth_r": 0,
             "mouth_g": 100,
             "mouth_b": 0,
             "eyes_r": 0,
             "eyes_g": 50,
             "eyes_b": 0,
-            "eyes_intensity": 70,
+            "eyes_intensity": 90,
             "left_pupil": 50,
             "right_pupil": 50,
         },
