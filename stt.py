@@ -12,7 +12,7 @@ class STT:
 
         device = sounddevice.query_devices(kind='input')
         sample_rate = int(device["default_samplerate"])
-        chunk_size = stt_conf["chunk_size"]
+        chunk_size = int(stt_conf["chunk_size"])
         model_name = stt_conf[lang]["model"]
 
         model = vosk.Model(model_name) 

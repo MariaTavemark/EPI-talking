@@ -4,7 +4,7 @@ from tkinter import Tk
 from tkinter.filedialog import askopenfilename
 import os.path
 from openai import OpenAI
-import json
+import traceback
 import openai
 
 import ollama
@@ -45,7 +45,7 @@ class LLM:
 
         llm_conf = config['LLM']
         self.llm_type = llm_conf['type']
-        self.temperature = llm_conf['temperature']
+        self.temperature = float(llm_conf['temperature'])
         t_conf = llm_conf[self.llm_type]
         self.lang = config["Global"]["language"]
 
@@ -153,8 +153,11 @@ class LLM:
             print(e.status_code)
             print(e.response)
             print(e.__cause__)
-        finally:
-            return ""
+        except Exception as e:
+            print("Something went wrong when generating an answer")
+            print(traceback.format_exc())
+        
+        return ""
     
 
     def getCost(self):
@@ -166,7 +169,7 @@ class LLM:
             "total": input_cost + output_cost
             }
     
-    
+
     def shutdown(self):
         if self.llm_type == "online":
             cost = self.getCost()
@@ -174,9 +177,9 @@ class LLM:
             print("The cost for these is", cost["input"], "kr and", cost["output"], "kr respectively")
             print("Total cost was:", cost["total"], "kr")
         else:
-            self.client.kill()
+            self.server.kill()
             time.sleep(1)
-            self.client.terminate()
+            self.server.terminate()
         
     
     def clearHistory(self):

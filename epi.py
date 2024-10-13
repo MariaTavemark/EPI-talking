@@ -161,7 +161,7 @@ class EPI:
 
 
     def ikarosRunning(self):
-        return self.server.poll() is not None
+        return self.server.poll() is None
     
 
     def shutdown(self):
@@ -189,7 +189,7 @@ class EPI:
         if valid_values[0] <= value <= valid_values[1]:
             try:
                 req = self.epi_url + self.control_path + str(self.channels[channel]) + "/0/" + str(value)
-                requests.get(req, timeout=0.1)
+                requests.get(req, timeout=0.25)
             except Exception as err:
                 print("An error occurred when communicating with EPI. Assuming that Ikaros is unresponsive..")
                 if tries < 5:

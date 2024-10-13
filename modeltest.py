@@ -6,11 +6,12 @@ import sys
 import select
 from configobj import ConfigObj
 import time
+import traceback
 
-from .tts import TTS
-from .llm import LLM
-from .stt import STT
-from .epi import EPI
+from tts import TTS
+from llm import LLM
+from stt import STT
+from epi import EPI
 
 # Read our config from config.ini
 config = ConfigObj("config.ini")
@@ -31,6 +32,8 @@ def checkKeypress():
             print("Chat history cleared, the conversation with EPI has now started over.")
         elif ch == 'i':
             epi.restartIkaros()
+        elif ch == 'q':
+            raise KeyboardInterrupt
 
 
 def run_stt_to_llm():
@@ -54,7 +57,9 @@ def run_stt_to_llm():
     print("EPI is listening")
     print("To make EPI pause (and not listen), press 'p'")
     print("Press 'r' to reset the conversation with EPI")
+    print("Press 'q' to quit")
     print("If EPI is not moving/changing colors, press 'i' to restart Ikaros")
+    print("Please note that you need to press 'Enter' after each keypress for me to understand it")
 
     while True:
         checkKeypress()
@@ -86,7 +91,6 @@ def run_stt_to_llm():
 
             print("EPI is talking")
             print("EPI said: ", " ".join(answer[:-1]))
-
             mood = answer[-1:][0]
 
             happy_moods = ["glad", "happy"]
@@ -111,18 +115,19 @@ def run_stt_to_llm():
             no_codes = ["nej,", "nej", "nej.", "nej!", "nej?", "no,", "no", "no.", "no!", "no?"]
             yes_codes = ["ja,", "ja", "ja.", "ja!", "ja?", "yes,", "yes", "yes.", "yes!", "yes?"]
             if any([True for x in answer[:-1] if x.lower() in no_codes]):
-                epi.nod()
-            elif any([True for x in answer[:-1] if x.lower() in yes_codes]):
                 epi.shakeHead()
+            elif any([True for x in answer[:-1] if x.lower() in yes_codes]):
+                epi.nod()
 
             tts.say(" ".join(answer[:-1]))
 
             #print("EPI is talking and flashing")
             while tts.isTalking():
-                intensity = random()
+                intensity = random() * 0.2
+                print(intensity)
                 #print("Random mouth intensity: ", intensity)
                 epi.controlEpi("mouth_intensity", intensity)
-                time.sleep(0.4)
+                time.sleep(0.2)
 
             epi.setMood("neutral")
             stt.resume()
@@ -138,7 +143,7 @@ if __name__ == "__main__":
         print("Goodbye!")
     except Exception as err:
         print("An error occured during the conversation with EPI:", err)
-        print(err.__cause__)
+        print(traceback.format_exc())
     finally:
         llm.shutdown()
         epi.shutdown()

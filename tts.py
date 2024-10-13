@@ -13,11 +13,11 @@ class TTS:
 
         self.engine_type = tts_conf['type']
         age = tts_conf['age']
-        self.volume = tts_conf['volume']
+        self.volume = float(tts_conf['volume'])
 
-        voice_name = tts_conf[lang][age]["voice_" + type]
-        self.rate = tts_conf[lang][age]["rate_"+ type]
-        self.pitch = tts_conf[lang][age]['pitch_multiplier']
+        voice_name = tts_conf[lang][age]["voice_" + self.engine_type]
+        self.rate = float(tts_conf[lang][age]["rate_"+ self.engine_type])
+        self.pitch = float(tts_conf[lang][age]['pitch_multiplier'])
 
         if self.engine_type == "pyttsx3":
             self.engine = pyttsx3.init()
@@ -39,6 +39,7 @@ class TTS:
             self.tts_thread = None
 
         elif self.engine_type == "avspeech":
+            self.engine = None
             voices_tmp = AVSpeechSynthesisVoice.speechVoices()
             voices = list(filter(lambda x: any([True for c in lang_codes if c in x.language()]), voices_tmp))
             self.voice = next((x for x in voices if x.identifier() == voice_name), None)
@@ -64,7 +65,7 @@ class TTS:
             sentence.setSpeechString_(text)
             sentence.setRate_(self.rate)
             sentence.setPitchMultiplier_(self.pitch)
-            sentence.setVolume(self.volume)
+            sentence.setVolume_(self.volume)
             sentence.setVoice_(self.voice)
             self.engine.speakUtterance_(sentence)
 
@@ -75,4 +76,6 @@ class TTS:
                 return self.tts_thread.is_alive()
             return False
         elif self.engine_type == "avspeech":
-            return self.engine.isSpeaking()
+            if self.engine:
+                return self.engine.isSpeaking()
+            return False
