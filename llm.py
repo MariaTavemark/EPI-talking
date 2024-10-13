@@ -166,6 +166,7 @@ class LLM:
             "total": input_cost + output_cost
             }
     
+    
     def shutdown(self):
         if self.llm_type == "online":
             cost = self.getCost()

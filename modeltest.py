@@ -122,14 +122,11 @@ def run_stt_to_llm():
                 intensity = random()
                 #print("Random mouth intensity: ", intensity)
                 epi.controlEpi("mouth_intensity", intensity)
-                time.sleep(0.35)
+                time.sleep(0.4)
 
             epi.setMood("neutral")
             stt.resume()
             print("EPI is listening")
-        else:
-            #Maybe make epi do something if it did not recognize any speech (pass below means "do nothing")
-            pass
 
 
 if __name__ == "__main__":
