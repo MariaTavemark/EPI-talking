@@ -123,8 +123,7 @@ def run_stt_to_llm():
 
             #print("EPI is talking and flashing")
             while tts.isTalking():
-                intensity = random() * 0.2
-                print(intensity)
+                intensity = int(random() * 50)
                 #print("Random mouth intensity: ", intensity)
                 epi.controlEpi("mouth_intensity", intensity)
                 time.sleep(0.2)
@@ -153,11 +152,17 @@ if __name__ == "__main__":
 
 #Problem: 
 
-# Att skicka för långa ljudsekvenser med TTS till högtalaren resulterar i segfaults för att den inte kan kommunicera med huvudet
-# Lösning: Använd macbookens högtalare...
-
 # Dålig STT, kan inte många ord..
 # Lösning: Byt till openAIs modell whisper som kan alla ord på alla språk.. (kostar $0.006 /minut )
 
 # Dålig TTS
 # Lösning: Byt till Whisper (kostar 15 USD/1M tecken)
+
+#TODO:
+#Testa vuxen engelska
+#Testa vuxen svenska
+#Testa barn engelska
+#Testa pyttsx3 svenska
+#Testa pyttsx3 engelska
+#Testa online LLM svenska
+#Testa online LLM engelska
