@@ -55,7 +55,9 @@ class TTS:
 
         if self.engine_type == "pyttsx3":
             self.engine.say(text)
-            self.tts_thread = threading.Thread(target=self.engine.runAndWait)
+            if self.tts_thread:
+                self.tts_thread.join()
+            self.tts_thread = threading.Thread(target=self.engine.runAndWait())
             self.tts_thread.start()
 
         elif self.engine_type == "avspeech":

@@ -47,9 +47,13 @@ def run_stt_to_llm():
     epi._nod_()
     epi._shakeHead_()
     epi.setMood("neutral")
-    
-    print("Saying hej!")
-    tts.say("Hej!")
+    if config["Global"]["language"] == "sv":
+        print("Saying hej!")
+        tts.say("Hej!")
+    else:
+        print("Saying Hello!")
+        tts.say("Hello!")
+
     while tts.isTalking():
         time.sleep(0.1)
     
@@ -129,10 +133,10 @@ def run_stt_to_llm():
 
             #print("EPI is talking and flashing")
             while tts.isTalking():
-                intensity = int(random() * 30)
+                intensity = round(random()* 0.5, 1) + 0.1
                 #print("Random mouth intensity: ", intensity)
                 epi.controlEpi("mouth_intensity", intensity)
-                time.sleep(0.2)
+                time.sleep(0.1)
 
             epi.setMood("neutral")
             stt.resume()
@@ -158,17 +162,26 @@ if __name__ == "__main__":
 
 #Problem: 
 
-# Dålig STT, kan inte många ord..
+# Dålig STT på svenska, kan inte många ord..
 # Lösning: Byt till openAIs modell whisper som kan alla ord på alla språk.. (kostar $0.006 /minut )
 
-# Dålig TTS
+# Dålig TTS - kanske fixat?
 # Lösning: Byt till Whisper (kostar 15 USD/1M tecken)
 
 #TODO:
-#Testa vuxen engelska
-#Testa vuxen svenska
-#Testa barn engelska
-#Testa pyttsx3 svenska
-#Testa pyttsx3 engelska
-#Testa online LLM svenska
-#Testa online LLM engelska
+# Nada
+
+#Done:
+#Testa barn engelska - dålig röst just nu
+#Testa vuxen engelska - dålig just nu
+#     Kommentar - EPI på engelska lokalt klarar ibland av "mood"
+
+#Testa vuxen svenska - fungerar bra.
+#Test barn svenska - liiiiite creepy röst, ändra kanske röst+pitch
+
+#Testa pyttsx3 svenska - fungerar bra oftast.
+#Testa pyttsx3 engelska - fungerar bra
+
+#Testa online LLM engelska - perfekt utöver röst.
+#Testa online LLM svenska - perfekt utöver STT
+
