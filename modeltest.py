@@ -25,7 +25,10 @@ def checkKeypress():
     while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
         ch = sys.stdin.read(1)
         if ch == 'p':
-            stt.pause()
+            if stt.paused:
+                stt.resume()
+            else:
+                stt.pause()
             print("EPI is now " + ("" if not stt.paused else "not ") + "listening. Press 'p' to make EPI " + ("" if stt.paused else "not ") + "listen")
         elif ch == 'r':
             llm.clearHistory()
@@ -133,7 +136,7 @@ def run_stt_to_llm():
 
             #print("EPI is talking and flashing")
             while tts.isTalking():
-                intensity = round(random()* 0.5, 1) + 0.1
+                intensity = round(random()* 0.7, 1) + 0.1
                 #print("Random mouth intensity: ", intensity)
                 epi.controlEpi("mouth_intensity", intensity)
                 time.sleep(0.1)
