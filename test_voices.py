@@ -3,7 +3,7 @@
 voice_type = "avs"
 tts_rate_desired_pyttsx3 = 130
 tts_rate_desired_avspeech = 0.5
-tts_rate_desired_avspeech_pitch = 0.55
+tts_rate_desired_avspeech_rate = 0.55
 en_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
 
 def createTTS():
@@ -18,8 +18,8 @@ def createSv():
     sentence_sv.setSpeechString_(sentence)
     sentence_sv_pitch.setSpeechString_(sentence)
     sentence_sv.setRate_(tts_rate_desired_avspeech)
-    sentence_sv_pitch.setRate_(tts_rate_desired_avspeech_pitch)
-    sentence_sv_pitch.setPitchMultiplier_(1.8)
+    sentence_sv_pitch.setRate_(tts_rate_desired_avspeech_rate)
+    sentence_sv_pitch.setPitchMultiplier_(2.0)
     sentence_sv.setVolume_(1.0)
     sentence_sv_pitch.setVolume_(1.0)
     return (sentence_sv, sentence_sv_pitch)
@@ -31,7 +31,7 @@ def createEn():
     sentence_en.setSpeechString_(sentence)
     sentence_en_pitch.setSpeechString_(sentence)
     sentence_en.setRate_(tts_rate_desired_avspeech)
-    sentence_en_pitch.setRate_(tts_rate_desired_avspeech_pitch)
+    sentence_en_pitch.setRate_(tts_rate_desired_avspeech_rate)
     sentence_en_pitch.setPitchMultiplier_(1.8)
     sentence_en.setVolume_(1.0)
     sentence_en_pitch.setVolume_(1.0)
