@@ -17,46 +17,41 @@
 #/Users/epi/miniforge3/bin/python3
 
 #Global
-from random import random
-import sys
-import select
+from random import random, shuffle
 from configobj import ConfigObj
 import time
 import traceback
 
 from tts import TTS
-from llm import LLM
-from stt import STT
 from epi import EPI
 
 # Read our config from config.ini
 config = ConfigObj("config.ini")
 
 tts = TTS(config)
-llm = LLM(config)
-stt = STT(config)
 epi = EPI(config)
 
 def checkKeypress():
-    while sys.stdin in select.select([sys.stdin], [], [], 0)[0]:
-        ch = sys.stdin.read(1)
-        if ch == 'p':
-            if stt.paused:
-                stt.resume()
-            else:
-                stt.pause()
-            print("EPI is now " + ("" if not stt.paused else "not ") + "listening. Press 'p' to make EPI " + ("" if stt.paused else "not ") + "listen")
-        elif ch == 'r':
-            llm.clearHistory()
-            print("Chat history cleared, the conversation with EPI has now started over.")
-        elif ch == 'i':
-            epi.restartIkaros()
-        elif ch == 'q':
-            raise KeyboardInterrupt
+    ch = input()
+    if ch == 'v':
+        print("Changing voices!")
+        tts.next_voice()
+    elif ch == 'n':
+        print("Saying next line")
+        return "Next"
+    elif ch == 'i':
+        epi.restartIkaros()
+    elif ch == 'q':
+        raise KeyboardInterrupt
+    else:
+        print("Invalid input: " + ch)
+    return ""
 
 
 def run_stt_to_llm():
     print("System ready")
+
+    lang = config["Global"]["language"]
 
     for mood in epi.moods:
         print("EPI is " + mood)
@@ -66,7 +61,7 @@ def run_stt_to_llm():
     epi._nod_()
     epi._shakeHead_()
     epi.setMood("neutral")
-    if config["Global"]["language"] == "sv":
+    if lang == "sv":
         print("Saying hej!")
         tts.say("Hej!")
     else:
@@ -76,56 +71,47 @@ def run_stt_to_llm():
     while tts.isTalking():
         time.sleep(0.1)
     
-    stt.resume()
-
-    print("EPI is listening")
-    print("To make EPI pause (and not listen), press 'p'")
-    print("Press 'r' to reset the conversation with EPI")
+    print("EPI is ready")
+    print("To change to a random voice from the config, press 'v'")
+    print("To make EPI say the next line, press 'n'")
     print("Press 'q' to quit")
     print("If EPI is not moving/changing colors, press 'i' to restart Ikaros")
     print("Please note that you need to press 'Enter' after each keypress for me to understand it")
 
-    while True:
-        checkKeypress()
+    user_lines = config["Script"][lang]["user_lines"]
+    epi_lines = config["Script"][lang]["epi_lines"]
+    script_order = list(range(len(epi_lines)))
+    index = 0
+
+    #Remove the following two lines to always have the same order of lines in the script
+    if (len(user_lines) == len(epi_lines)):
+        shuffle(script_order)
+
+    while (index < len(script_order)):
+        res = checkKeypress()
 
         if not epi.ikarosRunning():
             print("Ikaros server has crashed... Trying to restart!")
-            stt.pause()
             epi.startIkaros()
-            stt.resume()
-
-        if stt.paused:
-            time.sleep(0.2)
-            continue
-
-        result = stt.recognize()
-        #Test if we recognized any speech
-        if result:
-            print("You said:", result)
-
-            #Pass to LLM
-            epi.setMood("thinking")
-            print("EPI is thinking....")
-
-            answer = llm.generateAnswer(result).split()
-            epi.setMood("done_thinking")
-
-            #Pass to TTS
-            stt.pause()
-
+        
+        if (res == "Next"):
             print("EPI is talking")
-            if llm.llm_type == "local":
-                print("EPI said: ", " ".join(answer))
-                mood = "neutral"
-            else:
-                print("EPI said: ", " ".join(answer[:-1]))
-                mood = answer[-1:][0]
-                answer = answer[:-1]
 
             happy_moods = ["glad", "happy"]
             angry_moods = ["arg", "angry"]
             sad_moods = ["ledsen", "sad"]
             neutral_moods = ["neutral", "neutral"]
+
+            line = epi_lines[script_order[index]].split(' ')
+            answer = ' '.join(line[:-1])
+            if len(user_lines) > script_order[index]: 
+                user_line = user_lines[script_order[index]]
+            else:
+                user_line = None
+            index += 1
+            
+            mood = line[-1]
+            print("EPI is saying: " + answer)
 
             if any([True for x in happy_moods if x in mood.lower()]):
                 print("EPI is happy")
@@ -148,7 +134,7 @@ def run_stt_to_llm():
             elif any([True for x in answer if x.lower() in yes_codes]):
                 epi.nod()
 
-            tts.say(" ".join(answer))
+            tts.say(answer)
 
             #print("EPI is talking and flashing")
             while tts.isTalking():
@@ -158,8 +144,9 @@ def run_stt_to_llm():
                 time.sleep(0.1)
 
             epi.setMood("neutral")
-            stt.resume()
-            print("EPI is listening")
+            print("EPI is ready")
+            if (user_line):
+                print("We now expect the user to say " + user_line)
 
 
 if __name__ == "__main__":
@@ -173,34 +160,8 @@ if __name__ == "__main__":
         print("An error occured during the conversation with EPI:", err)
         print(traceback.format_exc())
     finally:
-        llm.shutdown()
         epi.shutdown()
         print("Goodbye!")
         exit(0)
 
-
-#Problem: 
-
-# Dålig STT på svenska, kan inte många ord..
-# Lösning: Byt till openAIs modell whisper som kan alla ord på alla språk.. (kostar $0.006 /minut )
-
-# Dålig TTS - kanske fixat?
-# Lösning: Byt till Whisper (kostar 15 USD/1M tecken)
-
-#TODO:
-# Nada
-
-#Done:
-#Testa barn engelska - dålig röst just nu
-#Testa vuxen engelska - dålig just nu
-#     Kommentar - EPI på engelska lokalt klarar ibland av "mood"
-
-#Testa vuxen svenska - fungerar bra.
-#Test barn svenska - liiiiite creepy röst, ändra kanske röst+pitch
-
-#Testa pyttsx3 svenska - fungerar bra oftast.
-#Testa pyttsx3 engelska - fungerar bra
-
-#Testa online LLM engelska - perfekt utöver röst.
-#Testa online LLM svenska - perfekt utöver STT
 
