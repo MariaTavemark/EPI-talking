@@ -55,7 +55,7 @@ def createEn():
     sentence_en.setRate_(tts_rate_desired_avspeech)
     sentence_en.setPitchMultiplier_(tts_pitch)
     sentence_en_pitch.setRate_(tts_rate_desired_avspeech_child)
-    sentence_en_pitch.setPitchMultiplier_(tts_pitch)
+    sentence_en_pitch.setPitchMultiplier_(tts_pitch_child)
     sentence_en.setVolume_(1.0)
     sentence_en_pitch.setVolume_(1.0)
     return (sentence_en, sentence_en_pitch)
