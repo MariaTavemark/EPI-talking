@@ -87,7 +87,11 @@ def run_stt_to_llm():
     if (len(user_lines) == len(epi_lines)):
         shuffle(script_order)
 
-    while (index < len(script_order)):
+    while (True):
+        if index >= len(script_order):
+            index = 0
+            tts.next_voice()
+            print("I have gone through all lines and have now changed to the next voice!")
         res = checkKeypress()
 
         if not epi.ikarosRunning():
