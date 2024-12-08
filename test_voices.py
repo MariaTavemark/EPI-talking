@@ -16,10 +16,15 @@
 
 #/Users/epi/miniforge3/bin/python3
 
-voice_type = "avs"
-tts_rate_desired_pyttsx3 = 130
 tts_rate_desired_avspeech = 0.5
-tts_rate_desired_avspeech_rate = 0.4
+tts_rate_desired_avspeech_child = 0.4
+tts_pitch = 1.0
+tts_pitch_child = 1.7
+
+english = True
+swedish = False
+
+
 en_codes = ["en", "en_GB", "en_US", "en_IN", "en_ZA", "en_IE", "en_AU", "en_GB_U_SD@sd=gbsct"]
 
 def createTTS():
@@ -34,8 +39,9 @@ def createSv():
     sentence_sv.setSpeechString_(sentence)
     sentence_sv_pitch.setSpeechString_(sentence)
     sentence_sv.setRate_(tts_rate_desired_avspeech)
-    sentence_sv_pitch.setRate_(tts_rate_desired_avspeech_rate)
-    sentence_sv_pitch.setPitchMultiplier_(2.0)
+    sentence_sv.setPitchMultiplier_(tts_pitch)
+    sentence_sv_pitch.setRate_(tts_rate_desired_avspeech_child)
+    sentence_sv_pitch.setPitchMultiplier_(tts_pitch_child)
     sentence_sv.setVolume_(1.0)
     sentence_sv_pitch.setVolume_(1.0)
     return (sentence_sv, sentence_sv_pitch)
@@ -47,91 +53,47 @@ def createEn():
     sentence_en.setSpeechString_(sentence)
     sentence_en_pitch.setSpeechString_(sentence)
     sentence_en.setRate_(tts_rate_desired_avspeech)
-    sentence_en_pitch.setRate_(tts_rate_desired_avspeech_rate)
-    sentence_en_pitch.setPitchMultiplier_(1.6)
+    sentence.setPitchMultiplier_(tts_pitch)
+    sentence_en_pitch.setRate_(tts_rate_desired_avspeech_child)
+    sentence_en_pitch.setPitchMultiplier_(tts_pitch)
     sentence_en.setVolume_(1.0)
     sentence_en_pitch.setVolume_(1.0)
     return (sentence_en, sentence_en_pitch)
 
-if voice_type == "pyttsx3":
-    import pyttsx3
+#Pitch is between 0.5 and 2.0
+from AppKit import AVSpeechSynthesizer, AVSpeechSynthesisVoice, AVSpeechUtterance
+import time
+#tts_engine.setOutputChannels_()
+voices = AVSpeechSynthesisVoice.speechVoices()
 
-    
+sv_voices = list(filter(lambda x: "sv" in x.language() or "sv-SE" in x.language(), voices))
+en_voices = list(filter(lambda x: any([True for c in en_codes if c in x.language()]), voices))
+if swedish:
+    for i, v in enumerate(sv_voices):
+        print("")
+        print("Voice", i + 1, "out of", len(sv_voices) + 1)
+        print("pitch:", tts_pitch, "rate:", tts_rate_desired_avspeech, str(v)[40:])
+        #print(v.identifier())
+        tts_engine = createTTS()
+        sentence_sv, sentence_sv_pitch = createSv()
+        sentence_sv.setVoice_(v)
+        sentence_sv_pitch.setVoice_(v)
+        print(sentence_sv.volume())
+        tts_engine.speakUtterance_(sentence_sv)
+        while(tts_engine.isSpeaking()):
+            time.sleep(0.2)
+        tts_engine = createTTS()
+        print("pitch:", tts_pitch_child, "rate:", tts_rate_desired_avspeech_child, str(v)[40:])
+        tts_engine.speakUtterance_(sentence_sv_pitch)
+        while(tts_engine.isSpeaking()):
+            time.sleep(0.2)
 
-    engine = pyttsx3.init()
-
-    voices = engine.getProperty('voices')
-
-    #for voice in voices:
-    #    print(voice)
-    #    print()
-
-    #for voice in filter(lambda x: any([True for a in x.languages if "sv" in a]), voices):
-    #    print(voice)
-    #    print()
-
-    #exit(0)
-
-
-    #print("Swedish voices")
-
-    #sv_voices = list(filter(lambda x: "sv" in x.languages or "sv_SE" in x.languages, voices))
-    #for voice in sv_voices:
-    #    print(voice)
-    #    print()
-
-    #print("Trying Swedish voices, with no age")
-
-    #for id, voice in enumerate(sv_voices):
-    #    print("Voice is now ", '"' + voice.name + '"', "and voice", voice)
-    #    engine.setProperty('voice', voice.id) 
-    #    engine.setProperty('rate', tts_rate_desired_pyttsx3) 
-    #    engine.say("Hej! Jag heter EPI och är en liten söt robot som testar sin röst för att se vilken som passar mig bäst!")
-    #    engine.runAndWait()
-
-
-    print("English voices:")
-    en_voices = list(filter(lambda x: any([True for c in en_codes if c in x.languages]), voices))
-
-
-    print("Trying English voices, with no age")
-
-    for id, voice in enumerate(en_voices):
-        print("Voice is now ", '"' + voice.name + '"', "and voice", voice)
-        engine.setProperty('voice', voice.id) 
-        engine.setProperty('rate', tts_rate_desired_pyttsx3) 
-        engine.say("Hello! My name is EPI and I am a cute little robot who is testing its voice to see which one suits me the best")
-        engine.runAndWait()
-
-else:
-    #Pitch is between 0.5 and 2.0
-    from AppKit import AVSpeechSynthesizer, AVSpeechSynthesisVoice, AVSpeechUtterance
-    import time
-    #tts_engine.setOutputChannels_()
-    voices = AVSpeechSynthesisVoice.speechVoices()
-
-    sv_voices = list(filter(lambda x: "sv" in x.language() or "sv-SE" in x.language(), voices))
-    en_voices = list(filter(lambda x: any([True for c in en_codes if c in x.language()]), voices))
-
-    #for v in sv_voices:
-    #    print(v)
-    #    print(v.identifier())
-    #    tts_engine = createTTS()
-    #    sentence_sv, sentence_sv_pitch = createSv()
-    #    sentence_sv.setVoice_(v)
-    #    sentence_sv_pitch.setVoice_(v)
-    #    print(sentence_sv.volume())
-    #    tts_engine.speakUtterance_(sentence_sv)
-    #    while(tts_engine.isSpeaking()):
-    #        time.sleep(0.2)
-    #    tts_engine = createTTS()
-    #    tts_engine.speakUtterance_(sentence_sv_pitch)
-    #    while(tts_engine.isSpeaking()):
-    #        time.sleep(0.2)
-
-    for v in en_voices:
-        print(v)
-        print(v.identifier())
+if english:
+    for i, v in enumerate(en_voices):
+        print("")
+        print("Voice", i + 1, "out of", len(en_voices) + 1)
+        print("pitch:", tts_pitch, "rate:", tts_rate_desired_avspeech, str(v)[40:])
+        #print(v.identifier())
         tts_engine = createTTS()
         sentence_en, sentence_en_pitch = createEn()
         sentence_en.setVoice_(v)
@@ -140,11 +102,7 @@ else:
         while(tts_engine.isSpeaking()):
             time.sleep(0.2)
         tts_engine = createTTS()
+        print("pitch:", tts_pitch_child, "rate:", tts_rate_desired_avspeech_child, str(v)[40:])
         tts_engine.speakUtterance_(sentence_en_pitch)
         while(tts_engine.isSpeaking()):
             time.sleep(0.2)
-
-
-    print(tts_engine.isSpeaking())
-    print(tts_engine.outputChannels())
-    print(tts_engine.audioDeviceId())
