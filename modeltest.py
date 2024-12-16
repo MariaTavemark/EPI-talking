@@ -169,3 +169,4 @@ if __name__ == "__main__":
         exit(0)
 
 
+print("pitch:", tts_pitch_child, "rate:", tts_rate_desired_avspeech_child, str(v)[40:])
