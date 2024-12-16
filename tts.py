@@ -53,8 +53,7 @@ class TTS:
     def next_voice(self):
         next_index = round(random() * self.max_index)
         if len(self.used_voices) == len(self.voices):
-            print("You have now used all voices and lines on this test person. Waiting 10 seconds, then exiting.")
-            time.sleep(10)
+            print("You have now used all voices and lines on this test person.")
             return "Done"
         while (next_index in self.used_voices):
             next_index = round(random() * self.max_index)
@@ -69,6 +68,19 @@ class TTS:
         self.voice_name = self.voices[next_index]
 
         self.create_engine()
+
+
+    def summary(self, line):
+        for i in self.used_voices:
+            self.name = self.names[i]
+            self.rate = float(self.rates[i])
+            self.pitch = float(self.pitches[i])
+            self.voice_name = self.voices[i]
+
+            self.create_engine()
+            self.say(line)
+            time.sleep(1)
+
 
 
     def say(self, text: str):
