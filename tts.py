@@ -55,7 +55,7 @@ class TTS:
         if len(self.used_voices) == len(self.voices):
             print("You have now used all voices and lines on this test person. Waiting 10 seconds, then exiting.")
             time.sleep(10)
-            raise Exception("Quit")
+            return "Done"
         while (next_index in self.used_voices):
             next_index = round(random() * self.max_index)
 

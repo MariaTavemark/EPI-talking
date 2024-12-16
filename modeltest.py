@@ -24,156 +24,163 @@ import traceback
 import tty
 import sys
 
-tty.setcbreak(sys.stdin)
-
 from tts import TTS
 from epi import EPI
 
-# Read our config from config.ini
-config = ConfigObj("config.ini")
+class ModelTest:
+    def ModelTest(self):
+        tty.setcbreak(sys.stdin)
 
-tts = TTS(config)
-epi = EPI(config)
+        # Read our config from config.ini
+        self.config = ConfigObj("config.ini")
 
-def checkKeypress(index, maxIndex):
-    #ch = input()
-    ch = sys.stdin.read(1)
-    if ch == 'v':
-        print("Changing voices!")
-        tts.next_voice()
-    elif ch == 'n':
-        print("Saying line", index + 1, "out of", maxIndex)
-        return "Next"
-    elif ch == 'i':
-        epi.restartIkaros()
-    elif ch == 'q':
-        raise KeyboardInterrupt
-    else:
-        print("Invalid input: " + ch)
-    return ""
+        self.tts = TTS(self.config)
+        self.epi = EPI(self.config)
+
+        self.index = 0
 
 
-def run_stt_to_llm():
-    print("System ready")
 
-    lang = config["Global"]["language"]
+    def checkKeypress(self):
+        #ch = input()
+        ch = sys.stdin.read(1)
+        if ch == 'v':
+            print("Changing voices!")
+            self.tts.next_voice()
+        elif ch == 'n':
+            print("Saying line", self.index + 1, "out of", self.num_lines)
+            return "Next"
+        elif ch == 'i':
+            self.epi.restartIkaros()
+        elif ch == 'q':
+            raise KeyboardInterrupt
+        else:
+            print("Invalid input: " + ch)
+        return ""
 
-    for mood in epi.moods:
-        print("EPI is " + mood)
-        epi.setMood(mood)
-        time.sleep(1)
 
-    epi._nod_()
-    epi._shakeHead_()
-    epi.setMood("neutral")
-    if lang == "sv":
-        print("Saying hej!")
-        tts.say("Hej!")
-    else:
-        print("Saying Hello!")
-        tts.say("Hello!")
+    def run_stt_to_llm(self):
+        print("System ready")
 
-    while tts.isTalking():
-        time.sleep(0.1)
-    
-    print("EPI is ready")
-    print("To change to a random voice from the config, press 'v'")
-    print("To make EPI say the next line, press 'n'")
-    print("Press 'q' to quit")
-    print("If EPI is not moving/changing colors, press 'i' to restart Ikaros")
-    
-    #No longer needed...
-    #print("Please note that you need to press 'Enter' after each keypress for me to understand it")
+        lang = self.config["Global"]["language"]
 
-    user_lines = config["Script"][lang]["user_lines"]
-    epi_lines = config["Script"][lang]["epi_lines"]
-    script_order = list(range(len(epi_lines)))
-    index = 0
+        for mood in self.epi.moods:
+            print("EPI is " + mood)
+            self.epi.setMood(mood)
+            time.sleep(1)
 
-    #Remove the following two lines to always have the same order of lines in the script
-    if (len(user_lines) == len(epi_lines)):
-        shuffle(script_order)
+        self.epi._nod_()
+        self.epi._shakeHead_()
+        self.epi.setMood("neutral")
+        if lang == "sv":
+            print("Saying hej!")
+            self.tts.say("Hej!")
+        else:
+            print("Saying Hello!")
+            self.tts.say("Hello!")
 
-    while (True):
-        if index >= len(script_order):
-            index = 0
-            tts.next_voice()
-            print("I have gone through all lines and have now changed to the next voice!")
-        res = checkKeypress(index, len(epi_lines) - 1)
-
-        if not epi.ikarosRunning():
-            print("Ikaros server has crashed... Trying to restart!")
-            epi.startIkaros()
+        while self.tts.isTalking():
+            time.sleep(0.1)
         
-        if (res == "Next"):
-            #print("EPI is talking")
+        print("EPI is ready")
+        print("To change to a random voice from the config, press 'v'")
+        print("To make EPI say the next line, press 'n'")
+        print("Press 'q' to quit")
+        print("If EPI is not moving/changing colors, press 'i' to restart Ikaros")
+        
+        #No longer needed...
+        #print("Please note that you need to press 'Enter' after each keypress for me to understand it")
 
-            happy_moods = ["glad", "happy"]
-            angry_moods = ["arg", "angry"]
-            sad_moods = ["ledsen", "sad"]
-            neutral_moods = ["neutral", "neutral"]
+        user_lines = self.config["Script"][lang]["user_lines"]
+        epi_lines = self.config["Script"][lang]["epi_lines"]
+        script_order = list(range(len(epi_lines)))
+        self.num_lines = len(epi_lines)
 
-            line = epi_lines[script_order[index]].split(' ')
-            answer = ' '.join(line[:-1])
-            if len(user_lines) > script_order[index]: 
-                user_line = user_lines[script_order[index]]
-            else:
-                user_line = None
-            index += 1
+        #Remove the following two lines to always have the same order of lines in the script
+        if (len(user_lines) == len(epi_lines)):
+            shuffle(script_order)
+
+        while (True):
+            if self.index >= len(script_order):
+                self.index = 0
+                self.tts.next_voice()
+                print("I have gone through all lines and have now changed to the next voice!")
+            res = self.checkKeypress()
+
+            if not self.epi.ikarosRunning():
+                print("Ikaros server has crashed... Trying to restart!")
+                self.epi.startIkaros()
             
-            mood = line[-1]
-            print("EPI is saying: " + answer)
+            if (res == "Next"):
+                #print("EPI is talking")
 
-            if any([True for x in happy_moods if x in mood.lower()]):
-                #print("EPI is happy")
-                epi.setMood("happy")
-            elif any([True for x in angry_moods if x in mood.lower()]):
-                #print("EPI is angry")
-                epi.setMood("angry")
-            elif any([True for x in sad_moods if x in mood.lower()]):
-                #print("EPI is sad")
-                epi.setMood("sad")
-            else:
-                #print("Epi had the mood", mood.lower())
-                epi.setMood("neutral")
-            
+                happy_moods = ["glad", "happy"]
+                angry_moods = ["arg", "angry"]
+                sad_moods = ["ledsen", "sad"]
+                neutral_moods = ["neutral", "neutral"]
 
-            no_codes = ["nej,", "nej", "nej.", "nej!", "nej?", "no,", "no", "no.", "no!", "no?"]
-            yes_codes = ["ja,", "ja", "ja.", "ja!", "ja?", "yes,", "yes", "yes.", "yes!", "yes?"]
-            if any([True for x in answer if x.lower() in no_codes]):
-                epi.shakeHead()
-            elif any([True for x in answer if x.lower() in yes_codes]):
-                epi.nod()
+                line = epi_lines[script_order[self.index]].split(' ')
+                answer = ' '.join(line[:-1])
+                if len(user_lines) > script_order[self.index]: 
+                    user_line = user_lines[script_order[self.index]]
+                else:
+                    user_line = None
+                self.index += 1
+                
+                mood = line[-1]
+                print("EPI is saying: " + answer)
 
-            tts.say(answer)
+                if any([True for x in happy_moods if x in mood.lower()]):
+                    #print("EPI is happy")
+                    self.epi.setMood("happy")
+                elif any([True for x in angry_moods if x in mood.lower()]):
+                    #print("EPI is angry")
+                    self.epi.setMood("angry")
+                elif any([True for x in sad_moods if x in mood.lower()]):
+                    #print("EPI is sad")
+                    self.epi.setMood("sad")
+                else:
+                    #print("Epi had the mood", mood.lower())
+                    self.epi.setMood("neutral")
+                
 
-            #print("EPI is talking and flashing")
-            while tts.isTalking():
-                intensity = round(random()* 0.7, 1) + 0.1
-                #print("Random mouth intensity: ", intensity)
-                epi.controlEpi("mouth_intensity", intensity)
-                time.sleep(0.1)
+                no_codes = ["nej,", "nej", "nej.", "nej!", "nej?", "no,", "no", "no.", "no!", "no?"]
+                yes_codes = ["ja,", "ja", "ja.", "ja!", "ja?", "yes,", "yes", "yes.", "yes!", "yes?"]
+                if any([True for x in answer if x.lower() in no_codes]):
+                    self.epi.shakeHead()
+                elif any([True for x in answer if x.lower() in yes_codes]):
+                    self.epi.nod()
 
-            epi.setMood("neutral")
-            #print("EPI is ready")
-            if (user_line):
-                print("We now expect the user to say " + user_line)
+                self.tts.say(answer)
+
+                #print("EPI is talking and flashing")
+                while self.tts.isTalking():
+                    intensity = round(random()* 0.7, 1) + 0.1
+                    #print("Random mouth intensity: ", intensity)
+                    self.epi.controlEpi("mouth_intensity", intensity)
+                    time.sleep(0.1)
+
+                self.epi.setMood("neutral")
+                #print("EPI is ready")
+                if (user_line):
+                    print("We now expect the user to say " + user_line)
+
+
+
 
 
 if __name__ == "__main__":
     try:
+        model = ModelTest()
         for _ in range(100):
             print()
-        run_stt_to_llm()
+        model.run_stt_to_llm()
     except KeyboardInterrupt as k:
         print("Goodbye!")
     except Exception as err:
         print("An error occured during the conversation with EPI:", err)
         print(traceback.format_exc())
     finally:
-        epi.shutdown()
+        model.epi.shutdown()
         print("Goodbye!")
         exit(0)
-
-
-print("pitch:", tts_pitch_child, "rate:", tts_rate_desired_avspeech_child, str(v)[40:])
