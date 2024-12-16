@@ -21,6 +21,10 @@ from random import random, shuffle
 from configobj import ConfigObj
 import time
 import traceback
+import tty
+import sys
+
+tty.setcbreak(sys.stdin)
 
 from tts import TTS
 from epi import EPI
@@ -31,13 +35,14 @@ config = ConfigObj("config.ini")
 tts = TTS(config)
 epi = EPI(config)
 
-def checkKeypress():
-    ch = input()
+def checkKeypress(index, maxIndex):
+    #ch = input()
+    ch = sys.stdin.read(1)
     if ch == 'v':
         print("Changing voices!")
         tts.next_voice()
     elif ch == 'n':
-        print("Saying next line")
+        print("Saying line", index + 1, "out of", maxIndex)
         return "Next"
     elif ch == 'i':
         epi.restartIkaros()
@@ -76,7 +81,9 @@ def run_stt_to_llm():
     print("To make EPI say the next line, press 'n'")
     print("Press 'q' to quit")
     print("If EPI is not moving/changing colors, press 'i' to restart Ikaros")
-    print("Please note that you need to press 'Enter' after each keypress for me to understand it")
+    
+    #No longer needed...
+    #print("Please note that you need to press 'Enter' after each keypress for me to understand it")
 
     user_lines = config["Script"][lang]["user_lines"]
     epi_lines = config["Script"][lang]["epi_lines"]
@@ -92,14 +99,14 @@ def run_stt_to_llm():
             index = 0
             tts.next_voice()
             print("I have gone through all lines and have now changed to the next voice!")
-        res = checkKeypress()
+        res = checkKeypress(index, len(epi_lines) - 1)
 
         if not epi.ikarosRunning():
             print("Ikaros server has crashed... Trying to restart!")
             epi.startIkaros()
         
         if (res == "Next"):
-            print("EPI is talking")
+            #print("EPI is talking")
 
             happy_moods = ["glad", "happy"]
             angry_moods = ["arg", "angry"]
@@ -118,16 +125,16 @@ def run_stt_to_llm():
             print("EPI is saying: " + answer)
 
             if any([True for x in happy_moods if x in mood.lower()]):
-                print("EPI is happy")
+                #print("EPI is happy")
                 epi.setMood("happy")
             elif any([True for x in angry_moods if x in mood.lower()]):
-                print("EPI is angry")
+                #print("EPI is angry")
                 epi.setMood("angry")
             elif any([True for x in sad_moods if x in mood.lower()]):
-                print("EPI is sad")
+                #print("EPI is sad")
                 epi.setMood("sad")
             else:
-                print("Epi had the mood", mood.lower())
+                #print("Epi had the mood", mood.lower())
                 epi.setMood("neutral")
             
 
@@ -148,7 +155,7 @@ def run_stt_to_llm():
                 time.sleep(0.1)
 
             epi.setMood("neutral")
-            print("EPI is ready")
+            #print("EPI is ready")
             if (user_line):
                 print("We now expect the user to say " + user_line)
 
