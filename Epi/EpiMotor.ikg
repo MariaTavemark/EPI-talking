@@ -41,7 +41,7 @@
     <module class = "Gate" name = "PupilPosition"/>
     <!-- outputs can not have source offset -->
     <connection source = "SCFeedbackPosition.OUTPUT" target = "PupilPosition.INPUT" sourceoffset = "4" size = "2"/>
-    <output name = "PRESENT_PUPIL_POSITION"   source = "PupilPosition.OUTPUT"/>
+    <!--output name = "PRESENT_PUPIL_POSITION"   source = "PupilPosition.OUTPUT"/-->
     <module
 		class = "ServoConnector"
 		name = "SCFeedbackCurrent"

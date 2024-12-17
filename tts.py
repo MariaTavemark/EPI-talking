@@ -35,6 +35,8 @@ class TTS:
         self.used_voices = []
         self.max_index = min(len(self.names), len(self.rates), len(self.pitches), len(self.voices)) - 1
 
+        self.doing_summary = False
+
         self.next_voice()
 
 
@@ -44,16 +46,16 @@ class TTS:
         voices = list(filter(lambda x: any([True for c in self.lang_codes if c in x.language()]), voices_tmp))
         self.voice = next((x for x in voices if x.identifier() == self.voice_name), None)
         if self.voice is None:
-            print("Could not find TTS voice", self.voice_name)
+            print("TTS - Could not find TTS voice", self.voice_name)
             exit(1)
 
-        print("Now using voice " + self.name)
+        print("TTS - Now using " + self.name + " " + self.get_progress())
 
 
     def next_voice(self):
         next_index = round(random() * self.max_index)
         if len(self.used_voices) == len(self.voices):
-            print("You have now used all voices and lines on this test person.")
+            print("TTS - You have now used all voices and lines on this test person.")
             return "Done"
         while (next_index in self.used_voices):
             next_index = round(random() * self.max_index)
@@ -71,17 +73,29 @@ class TTS:
 
 
     def summary(self, line):
+        self.doing_summary = True
         for i in self.used_voices:
-            self.name = self.names[i]
-            self.rate = float(self.rates[i])
-            self.pitch = float(self.pitches[i])
-            self.voice_name = self.voices[i]
-
-            self.create_engine()
-            self.say(line)
-            time.sleep(1)
+            self.summary_step(line, i)
+        self.doing_summary = False
 
 
+    def summary_step(self, line, i):
+        self.name = self.names[i]
+        self.rate = float(self.rates[i])
+        self.pitch = float(self.pitches[i])
+        self.voice_name = self.voices[i]
+
+        self.create_engine()
+        self.say(line)
+        while(self.isTalking()):
+            time.sleep(0.2)
+        time.sleep(1)
+
+
+    def get_progress(self):
+        if self.doing_summary:
+            return ""
+        return "(" + str(len(self.used_voices)) + "/" + str((self.max_index + 1)) + ")"
 
     def say(self, text: str):
         while (self.isTalking()):

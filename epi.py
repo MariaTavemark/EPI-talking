@@ -149,28 +149,28 @@ class EPI:
         self.server = self.ikarosProcess()
         ikaros_started = False
         while not ikaros_started:
-            print("Ikaros has not yet started...")
+            print("EPI - Ikaros has not yet started...")
             if self.server and self.server.poll() is not None:
-                print("Ikaros has crashed...")
+                print("EPI - Ikaros has crashed...")
                 for row in self.server.stdout.readlines():
-                    print("Ikaros said: " + row.decode("utf-8"))
+                    print("EPI - Ikaros said: " + row.decode("utf-8"))
                 self.server = self.ikarosProcess()
 
             elif self.server:
                 row =  self.server.stdout.readline().decode("utf-8")
-                print("Ikaros said: " + row)
+                print("EPI - Ikaros said: " + row)
                 started_string = "IKAROS: 1 WARNING."
                 starting_string = "Power off servos."
                 if started_string in row:
-                    print("Ikaros has started, waiting for motors to power on..")
+                    print("EPI - Ikaros has started, waiting for motors to power on..")
                     time.sleep(5)
                     ikaros_started = True
                 if starting_string in row:
-                    print("Ikaros will be started in 15 seconds")
+                    print("EPI - Ikaros will be started in 15 seconds")
                     time.sleep(15)
                     if self.server.poll() is None:
                         ikaros_started = True
-                        print("Ikaros has started!")
+                        print("EPI - Ikaros has started!")
             time.sleep(0.2)
 
 
@@ -190,7 +190,7 @@ class EPI:
 
 
     def restartIkaros(self):
-        print("Restarting ikaros. Please wait!")
+        print("EPI - Restarting ikaros. Please wait!")
         self.terminateIkaros()
         self.startIkaros()
 
@@ -198,16 +198,16 @@ class EPI:
 
     def controlEpi(self, channel, value, tries=0):
         if channel not in self.channels:
-            raise ValueError("Invalid EPI channel sent:", channel)
+            raise ValueError("EPI - Invalid EPI channel sent:", channel)
         valid_values = self.valid_ranges[channel]
         if valid_values[0] <= value <= valid_values[1]:
             try:
                 req = self.epi_url + self.control_path + str(self.channels[channel]) + "/0/" + str(value)
                 requests.get(req, timeout=0.25)
             except Exception as err:
-                print("An error occurred when communicating with EPI. Assuming that Ikaros is unresponsive..")
+                print("EPI - An error occurred when communicating with EPI. Assuming that Ikaros is unresponsive..")
                 if tries < 5:
-                    print("Restarting ikaros... Please wait...")
+                    print("EPI - Restarting ikaros... Please wait...")
                     self.restartIkaros()
                     self.controlEpi(channel, value, tries + 1)
                 else:
@@ -216,7 +216,7 @@ class EPI:
 
     def setMood(self, mood):
         if mood not in self.moods:
-            raise ValueError("Invalid EPI mood sent:", mood)
+            raise ValueError("EPI - Invalid EPI mood sent:", mood)
         actions = self.moods[mood]
 
         for channel, value in actions.items():

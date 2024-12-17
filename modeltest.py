@@ -36,7 +36,7 @@ class ModelTest:
     sad_moods = ["ledsen", "sad"]
     neutral_moods = ["neutral", "neutral"]
 
-    def ModelTest(self):
+    def __init__(self):
         tty.setcbreak(sys.stdin)
 
         # Read our config from config.ini
@@ -48,9 +48,6 @@ class ModelTest:
 
         # Keep track of which line we are at
         self.index = 0
-
-        # Keep track of if we should run the final summary
-        self.should_do_summary = False
 
         self.lang = self.config["Global"]["language"]
         self.user_lines = self.config["Script"][self.lang]["user_lines"]
@@ -67,6 +64,7 @@ class ModelTest:
         ch = sys.stdin.read(1)
         if ch == 'v':
             self.nextVoice()
+            self.index = 0
         elif ch == 'n':
             print("Saying line", self.index + 1, "out of", self.num_lines)
             return "Next"
@@ -80,20 +78,40 @@ class ModelTest:
     
 
     def nextVoice(self):
-        if self.should_do_summary:
-            self.runSummary()
-            raise Exception("All done")
-        
-        print("Changing voices to voice", self.tts.used_voices[len(self.tts.used_voices) - 1])
-
         if self.tts.next_voice() == "Done":
-            self.should_do_summary = True
+            print()
+            print("We are now done. Please press 'n' when you are ready to run the summary of all voices. (press 's' to step through the summary)")
+            print()
+            ch = sys.stdin.read(1)
+            while (ch != 'n' and ch != 's'):
+                time.sleep(0.1)
+                ch = sys.stdin.read(1)
+
+            if ch == 'n':
+                self.run_summary()
+            else: 
+                self.step_summary()
+            return "Done"
+        print("Changing voices to", self.tts.name, self.tts.get_progress())
 
 
-    def runSummary(self):
+    def run_summary(self):
         print("I am now running the summary")
         line,_,_ = self.getLine(0)
         self.tts.summary(line)
+
+
+    def step_summary(self):
+        print()
+        print("I am now stepping through the summary. Press 'n' to hear the next voice.")
+        line,_,_ = self.getLine(0)
+        for i in self.tts.used_voices:
+            self.tts.summary_step(line, i)
+            print()
+            ch = sys.stdin.read(1)
+            while ch != 'n':
+                time.sleep(0.1)
+                ch = sys.stdin.read(1)
 
 
     def getLine(self, index = -1):
@@ -114,10 +132,8 @@ class ModelTest:
 
 
     def run_stt_to_llm(self):
-        print("System ready")
-
         for mood in self.epi.moods:
-            print("EPI is " + mood)
+            #print("EPI is " + mood)
             self.epi.setMood(mood)
             time.sleep(1)
 
@@ -125,26 +141,30 @@ class ModelTest:
         self.epi._shakeHead_()
         self.epi.setMood("neutral")
         if self.lang == "sv":
-            print("Saying hej!")
+            #print("Saying hej!")
             self.tts.say("Hej!")
         else:
-            print("Saying Hello!")
+            #print("Saying Hello!")
             self.tts.say("Hello!")
 
         while self.tts.isTalking():
             time.sleep(0.1)
         
-        print("EPI is ready")
+        print("System ready, using", self.tts.name)
+        #print("EPI is ready")
         print("To change to a random voice from the config, press 'v'")
         print("To make EPI say the next line, press 'n'")
         print("Press 'q' to quit")
         print("If EPI is not moving/changing colors, press 'i' to restart Ikaros")
-        
+        print()
+
         while (True):
             if self.index >= len(self.script_order):
                 self.index = 0
-                self.nextVoice()
-                print("I have gone through all lines and have now changed to voice", self.tts.used_voices[len(self.tts.used_voices) - 1])
+                if self.nextVoice() == "Done":
+                    return
+                print("I have gone through all lines and changed voices automatically.")
+                print()
             res = self.checkKeypress()
 
             if not self.epi.ikarosRunning():
@@ -180,6 +200,7 @@ class ModelTest:
                 self.epi.setMood("neutral")
                 if (user_line):
                     print("We now expect the user to say " + user_line)
+                print()
 
 
 
