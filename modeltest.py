@@ -162,6 +162,7 @@ class ModelTest:
             if self.index >= len(self.script_order):
                 self.index = 0
                 if self.nextVoice() == "Done":
+                    print("I am now done with the summary. Goodbye!")
                     return
                 print("I have gone through all lines and changed voices automatically.")
                 print()
