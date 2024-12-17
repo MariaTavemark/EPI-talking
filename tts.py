@@ -73,13 +73,13 @@ class TTS:
 
 
     def summary(self, line):
-        self.doing_summary = True
         for i in self.used_voices:
             self.summary_step(line, i)
         self.doing_summary = False
 
 
     def summary_step(self, line, i):
+        self.doing_summary = True
         self.name = self.names[i]
         self.rate = float(self.rates[i])
         self.pitch = float(self.pitches[i])
@@ -90,12 +90,14 @@ class TTS:
         while(self.isTalking()):
             time.sleep(0.2)
         time.sleep(1)
+        self.doing_summary = False
 
 
     def get_progress(self):
         if self.doing_summary:
             return ""
         return "(" + str(len(self.used_voices)) + "/" + str((self.max_index + 1)) + ")"
+
 
     def say(self, text: str):
         while (self.isTalking()):
